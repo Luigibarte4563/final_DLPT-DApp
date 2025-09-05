@@ -2,553 +2,556 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>DLPT Driver & Admin Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/ethers@6.8.1/dist/ethers.umd.min.js"></script>
-    <!-- Firebase SDKs -->
-    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"></script>
-    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"></script>
-    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DLPT Driver & Admin Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.8.1/dist/ethers.umd.min.js"></script>
+  <!-- Firebase SDKs -->
+  <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"></script>
+  <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"></script>
 
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-        body {
-            font-family: 'Inter', sans-serif;
-            scroll-behavior: smooth;
-        }
+    body {
+      font-family: 'Inter', sans-serif;
+      scroll-behavior: smooth;
+    }
 
-        #wallet-connect-modal,
-        #custom-confirm-modal,
-        #notificationsDrawer,
-        #status-message-modal {
-            background-color: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(5px);
-        }
+    #wallet-connect-modal,
+    #custom-confirm-modal,
+    #notificationsDrawer,
+    #status-message-modal {
+      background-color: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(5px);
+    }
 
-        .spinner {
-            border: 4px solid rgba(255, 255, 255, 0.2);
-            border-left-color: #64748b;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-        }
+    .spinner {
+      border: 4px solid rgba(255, 255, 255, 0.2);
+      border-left-color: #64748b;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+    }
 
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-    </style>
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
 </head>
 
 <body class="bg-slate-950 min-h-screen flex flex-col text-slate-200">
-    <!-- Header -->
-    <header class="bg-slate-900 text-slate-200 flex items-center justify-between px-4 py-3 shadow-md">
-        <div class="flex items-center gap-2">
-            <span class="text-2xl font-bold">🚦 DLPT</span>
-            <span class="hidden sm:inline text-sm font-semibold ml-2">Driver & Admin Dashboard</span>
-        </div>
-        <div class="flex items-center gap-4">
-            <button id="notificationsBtn" class="relative text-xl hover:text-slate-400 hidden" aria-label="Notifications">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                    stroke="currentColor" class="w-6 h-6">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.964 3.973 1.514 6.257 1.491m-4.44-4.288c.951-.157 1.704-.764 2.052-1.472M20.59 10.966c-.686-.239-1.391-.453-2.112-.64c.241-.11.48-.225.711-.345M12 18.75a2.25 2.25 0 002.25-2.25v-.75m-4.5 0v.75a2.25 2.25 0 002.25 2.25z" />
-                </svg>
-                <span id="notifDot" class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full hidden"></span>
-            </button>
-            <div id="profile" class="hidden items-center gap-2 bg-slate-800 px-3 py-1 rounded-full text-sm font-mono">
-                <span id="walletShort"></span>
-                <span id="roleTag" class="ml-2 bg-slate-700 px-2 py-1 rounded-full text-xs font-bold"></span>
-                <span id="plateTag" class="ml-2 bg-slate-700 px-2 py-1 rounded-full text-xs font-bold hidden"></span>
-            </div>
-            <button id="connectWalletBtn"
-                class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-full shadow-lg transition-all duration-300 transform active:scale-95">
-                Connect Wallet
-            </button>
-            <button id="disconnectWalletBtn"
-                class="bg-red-700 hover:bg-red-800 text-white font-semibold py-2 px-4 rounded-full shadow-lg transition-all duration-300 transform active:scale-95 hidden">
-                Disconnect
-            </button>
-        </div>
-    </header>
-
-    <!-- Wallet Connect Modal -->
-    <div id="wallet-connect-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
-        <div class="bg-slate-800 rounded-xl shadow-2xl p-8 max-w-sm w-full text-center">
-            <h3 class="text-xl font-bold mb-4 text-slate-200">Connecting to Wallet...</h3>
-            <p class="text-slate-400">Please approve the connection in your wallet application.</p>
-        </div>
+  <!-- Header -->
+  <header class="bg-slate-900 text-slate-200 flex items-center justify-between px-4 py-3 shadow-md">
+    <div class="flex items-center gap-2">
+      <span class="text-2xl font-bold">🚦 DLPT</span>
+      <span class="hidden sm:inline text-sm font-semibold ml-2">Driver & Admin Dashboard</span>
     </div>
-
-    <!-- Custom Confirm Modal -->
-    <div id="custom-confirm-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
-        <div class="bg-slate-800 rounded-xl shadow-2xl p-8 max-w-sm w-full text-center">
-            <h3 id="confirm-title" class="text-xl font-bold mb-4 text-slate-200">Are you sure?</h3>
-            <p id="confirm-message" class="text-slate-400 mb-6">Do you want to proceed?</p>
-            <div class="flex justify-center gap-4">
-                <button id="confirm-yes"
-                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-md transition-all duration-300">
-                    Yes
-                </button>
-                <button id="confirm-no"
-                    class="bg-slate-600 hover:bg-slate-700 text-white font-semibold py-2 px-4 rounded-md transition-all duration-300">
-                    No
-                </button>
-            </div>
-        </div>
+    <div class="flex items-center gap-4">
+      <button id="notificationsBtn" class="relative text-xl hover:text-slate-400 hidden" aria-label="Notifications">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+          class="w-6 h-6">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.964 3.973 1.514 6.257 1.491m-4.44-4.288c.951-.157 1.704-.764 2.052-1.472M20.59 10.966c-.686-.239-1.391-.453-2.112-.64c.241-.11.48-.225.711-.345M12 18.75a2.25 2.25 0 002.25-2.25v-.75m-4.5 0v.75a2.25 2.25 0 002.25 2.25z" />
+        </svg>
+        <span id="notifDot" class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full hidden"></span>
+      </button>
+      <div id="profile" class="hidden items-center gap-2 bg-slate-800 px-3 py-1 rounded-full text-sm font-mono">
+        <span id="walletShort"></span>
+        <span id="roleTag" class="ml-2 bg-slate-700 px-2 py-1 rounded-full text-xs font-bold"></span>
+        <span id="plateTag" class="ml-2 bg-slate-700 px-2 py-1 rounded-full text-xs font-bold hidden"></span>
+      </div>
+      <button id="connectWalletBtn"
+        class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-full shadow-lg transition-all duration-300 transform active:scale-95">
+        Connect Wallet
+      </button>
+      <button id="disconnectWalletBtn"
+        class="bg-red-700 hover:bg-red-800 text-white font-semibold py-2 px-4 rounded-full shadow-lg transition-all duration-300 transform active:scale-95 hidden">
+        Disconnect
+      </button>
     </div>
+  </header>
 
-    <!-- Status Message Modal -->
-    <div id="status-message-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
-        <div class="bg-slate-800 rounded-xl shadow-2xl p-8 max-w-sm w-full text-center">
-            <h3 id="status-message-title" class="text-xl font-bold mb-4 text-slate-200"></h3>
-            <p id="status-message-content" class="text-slate-400 mb-6"></p>
-            <button id="status-message-close"
-                class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-md transition-all duration-300">
-                OK
-            </button>
-        </div>
+  <!-- Wallet Connect Modal -->
+  <div id="wallet-connect-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+    <div class="bg-slate-800 rounded-xl shadow-2xl p-8 max-w-sm w-full text-center">
+      <h3 class="text-xl font-bold mb-4 text-slate-200">Connecting to Wallet...</h3>
+      <p class="text-slate-400">Please approve the connection in your wallet application.</p>
     </div>
+  </div>
 
-    <!-- Notifications Drawer -->
-    <div id="notificationsDrawer"
-        class="fixed top-0 right-0 w-80 max-w-full h-full bg-slate-800 shadow-lg z-50 p-6 hidden flex-col">
-        <div class="flex justify-between items-center mb-4">
-            <span class="text-lg font-bold text-slate-200">Notifications</span>
-            <button onclick="document.getElementById('notificationsDrawer').classList.add('hidden')" class="text-xl">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                    stroke="currentColor" class="w-6 h-6">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
-        </div>
-        <ul id="notificationsList" class="space-y-3 text-slate-300"></ul>
+  <!-- Custom Confirm Modal -->
+  <div id="custom-confirm-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+    <div class="bg-slate-800 rounded-xl shadow-2xl p-8 max-w-sm w-full text-center">
+      <h3 id="confirm-title" class="text-xl font-bold mb-4 text-slate-200">Are you sure?</h3>
+      <p id="confirm-message" class="text-slate-400 mb-6">Do you want to proceed?</p>
+      <div class="flex justify-center gap-4">
+        <button id="confirm-yes"
+          class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-md transition-all duration-300">
+          Yes
+        </button>
+        <button id="confirm-no"
+          class="bg-slate-600 hover:bg-slate-700 text-white font-semibold py-2 px-4 rounded-md transition-all duration-300">
+          No
+        </button>
+      </div>
     </div>
+  </div>
 
-    <main class="flex flex-1 flex-col md:flex-row pb-16 md:pb-0">
-        <!-- Persistent Navigation -->
-        <nav id="mainNav"
-            class="bg-slate-900 text-white p-2 flex justify-around md:p-4 md:flex-col md:w-64 md:justify-start md:space-y-4 md:flex-none md:shadow-lg order-2 md:order-none fixed bottom-0 left-0 right-0 z-40 md:static">
-            <a href="index.html" id="nav-home"
-                class="nav-link flex flex-col items-center md:flex-row gap-1 md:gap-2 px-2 py-1 md:p-3 rounded-lg hover:bg-slate-800 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                    stroke="currentColor" class="w-6 h-6">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M2.25 12l8.954-8.955c.44-.439 1.144-.439 1.583 0L21.75 12m-4.5 9a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" />
-                </svg>
-                <div class="font-bold text-xs md:text-base">Home</div>
-            </a>
-            <a href="transfer.html" id="nav-payment"
-                class="nav-link flex flex-col items-center md:flex-row gap-1 md:gap-2 px-2 py-1 md:p-3 rounded-lg hover:bg-slate-800 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                    stroke="currentColor" class="w-6 h-6">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M12 6v12m-3-9h6m-9-3h12a2 2 0 012 2v8a2 2 0 01-2 2H3a2 2 0 01-2-2V7a2 2 0 012-2h3z" />
-                </svg>
-                <div class="font-bold text-xs md:text-base">Payment</div>
-            </a>
-            <a href="officer.html" id="nav-officer"
-                class="nav-link flex flex-col items-center md:flex-row gap-1 md:gap-2 px-2 py-1 md:p-3 rounded-lg hover:bg-slate-800 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                    stroke="currentColor" class="w-6 h-6">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M15.75 6.75a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 19.5v-2.25a2.25 2.25 0 012.25-2.25h1.5a2.25 2.25 0 012.25 2.25v2.25m4.5-1.5h1.5a2.25 2.25 0 002.25-2.25V18" />
-                </svg>
-                <div class="font-bold text-xs md:text-base">Officer</div>
-            </a>
-            <a href="notary-records.html?role=driver" id="nav-driver"
-                class="nav-link flex flex-col items-center md:flex-row gap-1 md:gap-2 px-2 py-1 md:p-3 rounded-lg hover:bg-slate-800 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                    stroke="currentColor" class="w-6 h-6">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M8.25 18L5.25 12M18.75 18L21.75 12M14.25 9l-2.25-6.75M12 9v6m-3-6H5.25M18.75 9H16.5M12 6a3 3 0 11-6 0 3 3 0 016 0zM18 6a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <div class="font-bold text-xs md:text-base">Driver</div>
-            </a>
-            <a href="notary-records.html?role=admin" id="nav-admin"
-                class="nav-link flex flex-col items-center md:flex-row gap-1 md:gap-2 px-2 py-1 md:p-3 rounded-lg hover:bg-slate-800 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                    stroke="currentColor" class="w-6 h-6">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M12 21.75a9.75 9.75 0 01-9.75-9.75V7.874a1.5 1.5 0 01.401-1.071l5.416-5.416a1.5 1.5 0 011.071-.401h6.25c.571 0 1.071.401 1.071 1.071v13.5c0 .571-.401 1.071-1.071 1.071H12z" />
-                </svg>
-                <div class="font-bold text-xs md:text-base">Admin</div>
-            </a>
-        </nav>
+  <!-- Status Message Modal -->
+  <div id="status-message-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+    <div class="bg-slate-800 rounded-xl shadow-2xl p-8 max-w-sm w-full text-center">
+      <h3 id="status-message-title" class="text-xl font-bold mb-4 text-slate-200"></h3>
+      <p id="status-message-content" class="text-slate-400 mb-6"></p>
+      <button id="status-message-close"
+        class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-md transition-all duration-300">
+        OK
+      </button>
+    </div>
+  </div>
 
-        <!-- Main Content Area -->
-        <div class="flex-1 flex flex-col items-center px-4 py-8 order-1 md:order-none">
-            <!-- Driver Login Section -->
-            <section id="driverLoginSection" class="w-full max-w-md bg-slate-800 rounded-xl shadow-md p-6 mb-8 hidden">
-                <h2 class="text-xl font-bold mb-4 text-slate-200">Driver Login</h2>
-                <form id="driverLoginForm" class="space-y-4">
-                    <input type="text" id="plateNumber" placeholder="Plate Number" required
-                        class="w-full px-4 py-2 border border-slate-700 bg-slate-900 rounded-md" />
-                    <input type="password" id="driverPin" placeholder="PIN" required
-                        class="w-full px-4 py-2 border border-slate-700 bg-slate-900 rounded-md" />
-                    <button type="submit"
-                        class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded-md transition-all duration-300 transform active:scale-95">
-                        Login
-                    </button>
-                </form>
-                <p id="driverLoginStatus" class="mt-4 text-sm text-slate-400"></p>
-            </section>
+  <!-- Notifications Drawer -->
+  <div id="notificationsDrawer"
+    class="fixed top-0 right-0 w-80 max-w-full h-full bg-slate-800 shadow-lg z-50 p-6 hidden flex-col">
+    <div class="flex justify-between items-center mb-4">
+      <span class="text-lg font-bold text-slate-200">Notifications</span>
+      <button onclick="document.getElementById('notificationsDrawer').classList.add('hidden')" class="text-xl">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+          class="w-6 h-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    <ul id="notificationsList" class="space-y-3 text-slate-300"></ul>
+  </div>
 
-            <!-- Driver Dashboard -->
-            <section id="driverDashboard" class="w-full max-w-2xl bg-slate-800 rounded-xl shadow-md p-6 mb-8 hidden">
-                <h2 class="text-xl font-bold mb-4 text-slate-200">Your Violations</h2>
-                <div class="mb-6">
-                    <span class="font-semibold text-slate-400">License Points:</span>
-                    <span id="licensePoints" class="font-bold text-lg ml-2">100</span>
-                </div>
-                <div id="loadingIndicator" class="flex items-center justify-center p-4 hidden">
-                    <div class="spinner"></div>
-                    <span class="ml-2 text-slate-400">Loading violations...</span>
-                </div>
-                <h3 class="text-lg font-bold mb-2 text-slate-200">Unpaid Violations</h3>
-                <table class="min-w-full text-sm table-auto border border-slate-700 mb-4">
-                    <thead class="bg-slate-700 text-slate-200">
-                        <tr>
-                            <th class="p-2 text-left">Type</th>
-                            <th class="p-2 text-left">Location</th>
-                            <th class="p-2 text-left">Timestamp</th>
-                            <th class="p-2 text-left">Amount</th>
-                            <th class="p-2 text-left">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="unpaidTable" class="bg-slate-800 text-slate-300"></tbody>
-                </table>
-                <h3 class="text-lg font-bold mb-2 text-slate-200">Paid Violations</h3>
-                <table class="min-w-full text-sm table-auto border border-slate-700">
-                    <thead class="bg-slate-700 text-slate-200">
-                        <tr>
-                            <th class="p-2 text-left">Type</th>
-                            <th class="p-2 text-left">Location</th>
-                            <th class="p-2 text-left">Timestamp</th>
-                            <th class="p-2 text-left">Amount</th>
-                            <th class="p-2 text-left">Paid On</th>
-                        </tr>
-                    </thead>
-                    <tbody id="paidTable" class="bg-slate-800 text-slate-300"></tbody>
-                </table>
-            </section>
+  <main class="flex flex-1 flex-col md:flex-row pb-16 md:pb-0">
+    <!-- Persistent Navigation -->
+    <nav id="mainNav"
+      class="bg-slate-900 text-white p-2 flex justify-around md:p-4 md:flex-col md:w-64 md:justify-start md:space-y-4 md:flex-none md:shadow-lg order-2 md:order-none fixed bottom-0 left-0 right-0 z-40 md:static">
+      <a href="index.html" id="nav-home"
+        class="nav-link flex flex-col items-center md:flex-row gap-1 md:gap-2 px-2 py-1 md:p-3 rounded-lg hover:bg-slate-800 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+          class="w-6 h-6">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M2.25 12l8.954-8.955c.44-.439 1.144-.439 1.583 0L21.75 12m-4.5 9a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" />
+        </svg>
+        <div class="font-bold text-xs md:text-base">Home</div>
+      </a>
+      <a href="transfer.html" id="nav-payment"
+        class="nav-link flex flex-col items-center md:flex-row gap-1 md:gap-2 px-2 py-1 md:p-3 rounded-lg hover:bg-slate-800 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+          class="w-6 h-6">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M12 6v12m-3-9h6m-9-3h12a2 2 0 012 2v8a2 2 0 01-2 2H3a2 2 0 01-2-2V7a2 2 0 012-2h3z" />
+        </svg>
+        <div class="font-bold text-xs md:text-base">Payment</div>
+      </a>
+      <a href="officer.html" id="nav-officer"
+        class="nav-link flex flex-col items-center md:flex-row gap-1 md:gap-2 px-2 py-1 md:p-3 rounded-lg hover:bg-slate-800 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+          class="w-6 h-6">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M15.75 6.75a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 19.5v-2.25a2.25 2.25 0 012.25-2.25h1.5a2.25 2.25 0 012.25 2.25v2.25m4.5-1.5h1.5a2.25 2.25 0 002.25-2.25V18" />
+        </svg>
+        <div class="font-bold text-xs md:text-base">Officer</div>
+      </a>
+      <a href="notary-records.html?role=driver" id="nav-driver"
+        class="nav-link flex flex-col items-center md:flex-row gap-1 md:gap-2 px-2 py-1 md:p-3 rounded-lg hover:bg-slate-800 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+          class="w-6 h-6">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M8.25 18L5.25 12M18.75 18L21.75 12M14.25 9l-2.25-6.75M12 9v6m-3-6H5.25M18.75 9H16.5M12 6a3 3 0 11-6 0 3 3 0 016 0zM18 6a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        <div class="font-bold text-xs md:text-base">Driver</div>
+      </a>
+      <a href="notary-records.html?role=admin" id="nav-admin"
+        class="nav-link flex flex-col items-center md:flex-row gap-1 md:gap-2 px-2 py-1 md:p-3 rounded-lg hover:bg-slate-800 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+          class="w-6 h-6">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M12 21.75a9.75 9.75 0 01-9.75-9.75V7.874a1.5 1.5 0 01.401-1.071l5.416-5.416a1.5 1.5 0 011.071-.401h6.25c.571 0 1.071.401 1.071 1.071v13.5c0 .571-.401 1.071-1.071 1.071H12z" />
+        </svg>
+        <div class="font-bold text-xs md:text-base">Admin</div>
+      </a>
+    </nav>
 
-            <!-- Admin Dashboard -->
-            <section id="adminDashboard" class="w-full max-w-4xl bg-slate-800 rounded-xl shadow-md p-6 mb-8 hidden">
-                <h2 class="text-xl font-bold mb-4 text-slate-200">Ledger Monitor</h2>
-                <table class="min-w-full text-sm table-auto border border-slate-700 mb-6">
-                    <thead class="bg-slate-700 text-slate-200">
-                        <tr>
-                            <th class="p-2 text-left">Officer</th>
-                            <th class="p-2 text-left">Plate No.</th>
-                            <th class="p-2 text-left">Type</th>
-                            <th class="p-2 text-left">Amount</th>
-                            <th class="p-2 text-left">Location</th>
-                            <th class="p-2 text-left">Timestamp</th>
-                            <th class="p-2 text-left">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="ledgerTable" class="bg-slate-800 text-slate-300"></tbody>
-                </table>
-                <h2 class="text-xl font-bold mb-4 text-slate-200">Analytics</h2>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                    <div class="bg-slate-900 p-4 rounded shadow text-center">
-                        <div class="text-2xl font-bold" id="hotspotCount">0</div>
-                        <div class="text-slate-400">Violation Hotspots</div>
-                    </div>
-                    <div class="bg-slate-900 p-4 rounded shadow text-center">
-                        <div class="text-2xl font-bold" id="repeatOffenders">0</div>
-                        <div class="text-slate-400">Repeat Offenders</div>
-                    </div>
-                    <div class="bg-slate-900 p-4 rounded shadow text-center">
-                        <div class="text-2xl font-bold" id="revenueTotal">₱0</div>
-                        <div class="text-slate-400">Total Revenue</div>
-                    </div>
-                </div>
-            </section>
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col items-center px-4 py-8 order-1 md:order-none">
+      <!-- Driver Login Section -->
+      <section id="driverLoginSection" class="w-full max-w-md bg-slate-800 rounded-xl shadow-md p-6 mb-8 hidden">
+        <h2 class="text-xl font-bold mb-4 text-slate-200">Driver Login</h2>
+        <form id="driverLoginForm" class="space-y-4">
+          <input type="text" id="plateNumber" placeholder="Plate Number" required
+            class="w-full px-4 py-2 border border-slate-700 bg-slate-900 rounded-md" />
+          <input type="password" id="driverPin" placeholder="PIN" required
+            class="w-full px-4 py-2 border border-slate-700 bg-slate-900 rounded-md" />
+          <button type="submit"
+            class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded-md transition-all duration-300 transform active:scale-95">
+            Login
+          </button>
+        </form>
+        <p id="driverLoginStatus" class="mt-4 text-sm text-slate-400"></p>
+      </section>
+
+      <!-- Driver Dashboard -->
+      <section id="driverDashboard" class="w-full max-w-2xl bg-slate-800 rounded-xl shadow-md p-6 mb-8 hidden">
+        <h2 class="text-xl font-bold mb-4 text-slate-200">Your Violations</h2>
+        <div class="mb-6">
+          <span class="font-semibold text-slate-400">License Points:</span>
+          <span id="licensePoints" class="font-bold text-lg ml-2">100</span>
         </div>
-    </main>
+        <div id="loadingIndicator" class="flex items-center justify-center p-4 hidden">
+          <div class="spinner"></div>
+          <span class="ml-2 text-slate-400">Loading violations...</span>
+        </div>
+        <h3 class="text-lg font-bold mb-2 text-slate-200">Unpaid Violations</h3>
+        <table class="min-w-full text-sm table-auto border border-slate-700 mb-4">
+          <thead class="bg-slate-700 text-slate-200">
+            <tr>
+              <th class="p-2 text-left">Type</th>
+              <th class="p-2 text-left">Location</th>
+              <th class="p-2 text-left">Timestamp</th>
+              <th class="p-2 text-left">Amount</th>
+              <th class="p-2 text-left">Action</th>
+            </tr>
+          </thead>
+          <tbody id="unpaidTable" class="bg-slate-800 text-slate-300"></tbody>
+        </table>
+        <h3 class="text-lg font-bold mb-2 text-slate-200">Paid Violations</h3>
+        <table class="min-w-full text-sm table-auto border border-slate-700">
+          <thead class="bg-slate-700 text-slate-200">
+            <tr>
+              <th class="p-2 text-left">Type</th>
+              <th class="p-2 text-left">Location</th>
+              <th class="p-2 text-left">Timestamp</th>
+              <th class="p-2 text-left">Amount</th>
+              <th class="p-2 text-left">Paid On</th>
+            </tr>
+          </thead>
+          <tbody id="paidTable" class="bg-slate-800 text-slate-300"></tbody>
+        </table>
+      </section>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, query, where, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+      <!-- Admin Dashboard -->
+      <section id="adminDashboard" class="w-full max-w-4xl bg-slate-800 rounded-xl shadow-md p-6 mb-8">
+        <h2 class="text-xl font-bold mb-4 text-slate-200">Ledger Monitor</h2>
+        <!-- The overflow-x-auto class makes the div horizontally scrollable if its content overflows -->
+        <div class="overflow-x-auto rounded-lg">
+          <table class="min-w-full text-sm table-auto border border-slate-700 mb-6">
+            <thead class="bg-slate-700 text-slate-200">
+              <tr>
+                <th class="p-2 text-left">Officer</th>
+                <th class="p-2 text-left">Plate No.</th>
+                <th class="p-2 text-left">Type</th>
+                <th class="p-2 text-left">Amount</th>
+                <th class="p-2 text-left">Location</th>
+                <th class="p-2 text-left">Timestamp</th>
+                <th class="p-2 text-left">Status</th>
+              </tr>
+            </thead>
+            <tbody id="ledgerTable" class="bg-slate-800 text-slate-300"></tbody>
+          </table>
+        </div>
+        <h2 class="text-xl font-bold mb-4 text-slate-200">Analytics</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div class="bg-slate-900 p-4 rounded shadow text-center">
+            <div class="text-2xl font-bold" id="hotspotCount">0</div>
+            <div class="text-slate-400">Violation Hotspots</div>
+          </div>
+          <div class="bg-slate-900 p-4 rounded shadow text-center">
+            <div class="text-2xl font-bold" id="repeatOffenders">0</div>
+            <div class="text-slate-400">Repeat Offenders</div>
+          </div>
+          <div class="bg-slate-900 p-4 rounded shadow text-center">
+            <div class="text-2xl font-bold" id="revenueTotal">₱0</div>
+            <div class="text-slate-400">Total Revenue</div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
 
-        // Firebase Global Variables
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, query, where, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        let app;
-        let db;
-        let auth;
-        let userId;
+    // Firebase Global Variables
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-        const connectWalletBtn = document.getElementById("connectWalletBtn");
-        const disconnectWalletBtn = document.getElementById("disconnectWalletBtn");
-        const walletConnectModal = document.getElementById("wallet-connect-modal");
-        const profile = document.getElementById("profile");
-        const walletShort = document.getElementById("walletShort");
-        const notificationsBtn = document.getElementById("notificationsBtn");
-        const roleTag = document.getElementById("roleTag");
-        const plateTag = document.getElementById("plateTag");
-        const notifDot = document.getElementById("notifDot");
-        const notificationsDrawer = document.getElementById("notificationsDrawer");
-        const notificationsList = document.getElementById("notificationsList");
-        const loadingIndicator = document.getElementById("loadingIndicator");
-        const statusMessageModal = document.getElementById("status-message-modal");
-        const statusMessageTitle = document.getElementById("status-message-title");
-        const statusMessageContent = document.getElementById("status-message-content");
-        const statusMessageClose = document.getElementById("status-message-close");
+    let app;
+    let db;
+    let auth;
+    let userId;
 
-        let userWallet = null;
-        let plateNumber = null;
+    const connectWalletBtn = document.getElementById("connectWalletBtn");
+    const disconnectWalletBtn = document.getElementById("disconnectWalletBtn");
+    const walletConnectModal = document.getElementById("wallet-connect-modal");
+    const profile = document.getElementById("profile");
+    const walletShort = document.getElementById("walletShort");
+    const notificationsBtn = document.getElementById("notificationsBtn");
+    const roleTag = document.getElementById("roleTag");
+    const plateTag = document.getElementById("plateTag");
+    const notifDot = document.getElementById("notifDot");
+    const notificationsDrawer = document.getElementById("notificationsDrawer");
+    const notificationsList = document.getElementById("notificationsList");
+    const loadingIndicator = document.getElementById("loadingIndicator");
+    const statusMessageModal = document.getElementById("status-message-modal");
+    const statusMessageTitle = document.getElementById("status-message-title");
+    const statusMessageContent = document.getElementById("status-message-content");
+    const statusMessageClose = document.getElementById("status-message-close");
 
-        // Custom Confirm Modal Logic
-        const customConfirmModal = document.getElementById("custom-confirm-modal");
-        const confirmTitle = document.getElementById("confirm-title");
-        const confirmMessage = document.getElementById("confirm-message");
-        const confirmYesBtn = document.getElementById("confirm-yes");
-        const confirmNoBtn = document.getElementById("confirm-no");
+    let userWallet = null;
+    let plateNumber = null;
 
-        function showCustomConfirm(title, message, callback) {
-            confirmTitle.textContent = title;
-            confirmMessage.textContent = message;
-            customConfirmModal.classList.remove("hidden");
-            confirmYesBtn.onclick = () => {
-                customConfirmModal.classList.add("hidden");
-                callback(true);
-            };
-            confirmNoBtn.onclick = () => {
-                customConfirmModal.classList.add("hidden");
-                callback(false);
-            };
+    // Custom Confirm Modal Logic
+    const customConfirmModal = document.getElementById("custom-confirm-modal");
+    const confirmTitle = document.getElementById("confirm-title");
+    const confirmMessage = document.getElementById("confirm-message");
+    const confirmYesBtn = document.getElementById("confirm-yes");
+    const confirmNoBtn = document.getElementById("confirm-no");
+
+    function showCustomConfirm(title, message, callback) {
+      confirmTitle.textContent = title;
+      confirmMessage.textContent = message;
+      customConfirmModal.classList.remove("hidden");
+      confirmYesBtn.onclick = () => {
+        customConfirmModal.classList.add("hidden");
+        callback(true);
+      };
+      confirmNoBtn.onclick = () => {
+        customConfirmModal.classList.add("hidden");
+        callback(false);
+      };
+    }
+
+    function showStatusMessage(title, message, isSuccess = true) {
+      statusMessageTitle.textContent = title;
+      statusMessageContent.textContent = message;
+      statusMessageModal.classList.remove("hidden");
+    }
+
+    statusMessageClose.onclick = () => {
+      statusMessageModal.classList.add("hidden");
+    };
+
+    // --- Firebase & App Initialization ---
+    async function initializeFirebase() {
+      try {
+        if (!app) {
+          app = initializeApp(firebaseConfig);
+          auth = getAuth(app);
+          db = getFirestore(app);
+          if (initialAuthToken) {
+            await signInWithCustomToken(auth, initialAuthToken);
+          } else {
+            await signInAnonymously(auth);
+          }
+          userId = auth.currentUser.uid;
         }
+      } catch (err) {
+        console.error("Firebase initialization failed:", err);
+      }
+    }
 
-        function showStatusMessage(title, message, isSuccess = true) {
-            statusMessageTitle.textContent = title;
-            statusMessageContent.textContent = message;
-            statusMessageModal.classList.remove("hidden");
+    notificationsBtn.onclick = () => {
+      notificationsDrawer.classList.remove("hidden");
+      notifDot.classList.add("hidden");
+      notificationsList.innerHTML = `<li class="text-center text-slate-500">No new notifications.</li>`;
+    };
+
+    const demoNotifsDriver = [
+      "New violation issued.",
+      "Unpaid violation reminder.",
+      "License points deducted."
+    ];
+    const demoNotifsAdmin = [
+      "Spike in violations detected.",
+      "Repeat offender flagged.",
+      "Revenue milestone reached."
+    ];
+
+    // Role detection
+    const params = new URLSearchParams(window.location.search);
+    const role = params.get("role") || "driver";
+
+    function showDashboard() {
+      // Hide all sections first
+      document.getElementById("driverLoginSection").classList.add("hidden");
+      document.getElementById("driverDashboard").classList.add("hidden");
+      document.getElementById("adminDashboard").classList.add("hidden");
+
+      if (role === "admin") {
+        roleTag.textContent = "Admin";
+        plateTag.classList.add("hidden");
+        document.getElementById("adminDashboard").classList.remove("hidden");
+        loadLedger();
+        loadAnalytics();
+        notificationsList.innerHTML = demoNotifsAdmin.map(n => `<li class="border-b pb-2 border-slate-700">${n}</li>`).join('');
+        if (sessionStorage.getItem("walletAddress")) {
+          notifDot.classList.remove("hidden");
         }
-
-        statusMessageClose.onclick = () => {
-            statusMessageModal.classList.add("hidden");
-        };
-
-        // --- Firebase & App Initialization ---
-        async function initializeFirebase() {
-            try {
-                if (!app) {
-                    app = initializeApp(firebaseConfig);
-                    auth = getAuth(app);
-                    db = getFirestore(app);
-                    if (initialAuthToken) {
-                        await signInWithCustomToken(auth, initialAuthToken);
-                    } else {
-                        await signInAnonymously(auth);
-                    }
-                    userId = auth.currentUser.uid;
-                }
-            } catch (err) {
-                console.error("Firebase initialization failed:", err);
-            }
+      } else {
+        roleTag.textContent = "Driver";
+        document.getElementById("driverDashboard").classList.remove("hidden");
+        notificationsList.innerHTML = demoNotifsDriver.map(n => `<li class="border-b pb-2 border-slate-700">${n}</li>`).join('');
+        if (sessionStorage.getItem("walletAddress")) {
+          notifDot.classList.remove("hidden");
         }
+      }
+    }
 
-        notificationsBtn.onclick = () => {
-            notificationsDrawer.classList.remove("hidden");
-            notifDot.classList.add("hidden");
-            notificationsList.innerHTML = `<li class="text-center text-slate-500">No new notifications.</li>`;
-        };
+    // --- Wallet Connection Logic (Untouched) ---
+    function updateUIForConnectedState(address) {
+      const short = `${address.slice(0, 6)}...${address.slice(-4)}`;
+      walletShort.textContent = short;
+      profile.classList.remove("hidden");
+      notificationsBtn.classList.remove("hidden");
+      connectWalletBtn.classList.add("hidden");
+      disconnectWalletBtn.classList.remove("hidden");
+    }
 
-        const demoNotifsDriver = [
-            "New violation issued.",
-            "Unpaid violation reminder.",
-            "License points deducted."
-        ];
-        const demoNotifsAdmin = [
-            "Spike in violations detected.",
-            "Repeat offender flagged.",
-            "Revenue milestone reached."
-        ];
+    function updateUIForDisconnectedState() {
+      profile.classList.add("hidden");
+      notificationsBtn.classList.add("hidden");
+      connectWalletBtn.classList.remove("hidden");
+      disconnectWalletBtn.classList.add("hidden");
+    }
 
-        // Role detection
-        const params = new URLSearchParams(window.location.search);
-        const role = params.get("role") || "driver";
-
-        function showDashboard() {
-            // Hide all sections first
-            document.getElementById("driverLoginSection").classList.add("hidden");
+    connectWalletBtn.onclick = async () => {
+      if (!window.ethereum) {
+        walletConnectModal.classList.remove("hidden");
+        walletConnectModal.querySelector('h3').textContent = 'Please Install MetaMask';
+        walletConnectModal.querySelector('p').textContent = 'You need a Web3 wallet like MetaMask to connect.';
+        setTimeout(() => {
+          walletConnectModal.classList.add("hidden");
+        }, 3000);
+        return;
+      }
+      walletConnectModal.classList.remove("hidden");
+      try {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const accounts = await provider.send("eth_requestAccounts", []);
+        userWallet = accounts[0];
+        sessionStorage.setItem("walletAddress", userWallet);
+        updateUIForConnectedState(userWallet);
+        walletConnectModal.classList.add("hidden");
+        if (role === "driver") {
+          if (!sessionStorage.getItem("plateNumber")) {
+            document.getElementById("driverLoginSection").classList.remove("hidden");
             document.getElementById("driverDashboard").classList.add("hidden");
-            document.getElementById("adminDashboard").classList.add("hidden");
-
-            if (role === "admin") {
-                roleTag.textContent = "Admin";
-                plateTag.classList.add("hidden");
-                document.getElementById("adminDashboard").classList.remove("hidden");
-                loadLedger();
-                loadAnalytics();
-                notificationsList.innerHTML = demoNotifsAdmin.map(n => `<li class="border-b pb-2 border-slate-700">${n}</li>`).join('');
-                if (sessionStorage.getItem("walletAddress")) {
-                    notifDot.classList.remove("hidden");
-                }
-            } else {
-                roleTag.textContent = "Driver";
-                document.getElementById("driverDashboard").classList.remove("hidden");
-                notificationsList.innerHTML = demoNotifsDriver.map(n => `<li class="border-b pb-2 border-slate-700">${n}</li>`).join('');
-                if (sessionStorage.getItem("walletAddress")) {
-                    notifDot.classList.remove("hidden");
-                }
-            }
+          } else {
+            plateNumber = sessionStorage.getItem("plateNumber");
+            plateTag.textContent = plateNumber;
+            showDashboard();
+          }
+        } else {
+          showDashboard();
         }
+      } catch (err) {
+        console.error("Wallet connection failed:", err);
+        walletConnectModal.classList.add("hidden");
+      }
+    };
 
-        // --- Wallet Connection Logic (Untouched) ---
-        function updateUIForConnectedState(address) {
-            const short = `${address.slice(0, 6)}...${address.slice(-4)}`;
-            walletShort.textContent = short;
-            profile.classList.remove("hidden");
-            notificationsBtn.classList.remove("hidden");
-            connectWalletBtn.classList.add("hidden");
-            disconnectWalletBtn.classList.remove("hidden");
+    disconnectWalletBtn.onclick = () => {
+      sessionStorage.removeItem("walletAddress");
+      updateUIForDisconnectedState();
+      userWallet = null;
+      if (role === "driver") {
+        document.getElementById("driverLoginSection").classList.remove("hidden");
+        document.getElementById("driverDashboard").classList.add("hidden");
+      }
+    };
+
+    window.addEventListener("DOMContentLoaded", async () => {
+      await initializeFirebase();
+      const saved = sessionStorage.getItem("walletAddress");
+      if (saved) {
+        userWallet = saved;
+        updateUIForConnectedState(saved);
+        if (role === "driver") {
+          plateNumber = sessionStorage.getItem("plateNumber");
+          if (!plateNumber) {
+            document.getElementById("driverLoginSection").classList.remove("hidden");
+            document.getElementById("driverDashboard").classList.add("hidden");
+          } else {
+            plateTag.textContent = plateNumber;
+            showDashboard();
+            loadDriverViolationsFromFirestore(plateNumber);
+          }
+        } else {
+          showDashboard();
         }
+      } else if (role === "driver") {
+        document.getElementById("driverLoginSection").classList.remove("hidden");
+      }
 
-        function updateUIForDisconnectedState() {
-            profile.classList.add("hidden");
-            notificationsBtn.classList.add("hidden");
-            connectWalletBtn.classList.remove("hidden");
-            disconnectWalletBtn.classList.add("hidden");
-        }
+      // Highlight active nav link
+      document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('bg-slate-700');
+        link.classList.add('hover:bg-slate-800');
+      });
+      const activeLink = document.getElementById(`nav-${role}`);
+      if (activeLink) {
+        activeLink.classList.remove('hover:bg-slate-800');
+        activeLink.classList.add('bg-slate-700');
+      }
+    });
 
-        connectWalletBtn.onclick = async () => {
-            if (!window.ethereum) {
-                walletConnectModal.classList.remove("hidden");
-                walletConnectModal.querySelector('h3').textContent = 'Please Install MetaMask';
-                walletConnectModal.querySelector('p').textContent = 'You need a Web3 wallet like MetaMask to connect.';
-                setTimeout(() => {
-                    walletConnectModal.classList.add("hidden");
-                }, 3000);
-                return;
-            }
-            walletConnectModal.classList.remove("hidden");
-            try {
-                const provider = new ethers.BrowserProvider(window.ethereum);
-                const accounts = await provider.send("eth_requestAccounts", []);
-                userWallet = accounts[0];
-                sessionStorage.setItem("walletAddress", userWallet);
-                updateUIForConnectedState(userWallet);
-                walletConnectModal.classList.add("hidden");
-                if (role === "driver") {
-                    if (!sessionStorage.getItem("plateNumber")) {
-                        document.getElementById("driverLoginSection").classList.remove("hidden");
-                        document.getElementById("driverDashboard").classList.add("hidden");
-                    } else {
-                        plateNumber = sessionStorage.getItem("plateNumber");
-                        plateTag.textContent = plateNumber;
-                        showDashboard();
-                    }
-                } else {
-                    showDashboard();
-                }
-            } catch (err) {
-                console.error("Wallet connection failed:", err);
-                walletConnectModal.classList.add("hidden");
-            }
-        };
+    // --- Driver Login & Firestore Logic ---
+    document.getElementById("driverLoginForm").onsubmit = (e) => {
+      e.preventDefault();
+      plateNumber = document.getElementById("plateNumber").value.trim();
+      const pin = document.getElementById("driverPin").value.trim();
+      if (plateNumber && pin) {
+        sessionStorage.setItem("plateNumber", plateNumber);
+        plateTag.textContent = plateNumber;
+        document.getElementById("driverLoginSection").classList.add("hidden");
+        showDashboard();
+        loadDriverViolationsFromFirestore(plateNumber);
+      } else {
+        document.getElementById("driverLoginStatus").textContent = "Invalid plate or PIN.";
+      }
+    };
 
-        disconnectWalletBtn.onclick = () => {
-            sessionStorage.removeItem("walletAddress");
-            updateUIForDisconnectedState();
-            userWallet = null;
-            if (role === "driver") {
-                document.getElementById("driverLoginSection").classList.remove("hidden");
-                document.getElementById("driverDashboard").classList.add("hidden");
-            }
-        };
+    function loadDriverViolationsFromFirestore(plate) {
+      loadingIndicator.classList.remove('hidden');
+      const violationsRef = collection(db, `artifacts/${appId}/public/data/violations`);
+      const q = query(violationsRef, where("license", "==", plate));
 
-        window.addEventListener("DOMContentLoaded", async () => {
-            await initializeFirebase();
-            const saved = sessionStorage.getItem("walletAddress");
-            if (saved) {
-                userWallet = saved;
-                updateUIForConnectedState(saved);
-                if (role === "driver") {
-                    plateNumber = sessionStorage.getItem("plateNumber");
-                    if (!plateNumber) {
-                        document.getElementById("driverLoginSection").classList.remove("hidden");
-                        document.getElementById("driverDashboard").classList.add("hidden");
-                    } else {
-                        plateTag.textContent = plateNumber;
-                        showDashboard();
-                        loadDriverViolationsFromFirestore(plateNumber);
-                    }
-                } else {
-                    showDashboard();
-                }
-            } else if (role === "driver") {
-                document.getElementById("driverLoginSection").classList.remove("hidden");
-            }
+      // onSnapshot provides real-time updates
+      onSnapshot(q, (querySnapshot) => {
+        loadingIndicator.classList.add('hidden');
+        const violations = [];
+        let points = 100;
 
-            // Highlight active nav link
-            document.querySelectorAll('.nav-link').forEach(link => {
-                link.classList.remove('bg-slate-700');
-                link.classList.add('hover:bg-slate-800');
-            });
-            const activeLink = document.getElementById(`nav-${role}`);
-            if (activeLink) {
-                activeLink.classList.remove('hover:bg-slate-800');
-                activeLink.classList.add('bg-slate-700');
-            }
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          violations.push({ id: doc.id, ...data, amountEth: 0.1 }); // Add default ETH amount
+          if (data.status === "Unpaid") {
+            points -= 10;
+          }
         });
 
-        // --- Driver Login & Firestore Logic ---
-        document.getElementById("driverLoginForm").onsubmit = (e) => {
-            e.preventDefault();
-            plateNumber = document.getElementById("plateNumber").value.trim();
-            const pin = document.getElementById("driverPin").value.trim();
-            if (plateNumber && pin) {
-                sessionStorage.setItem("plateNumber", plateNumber);
-                plateTag.textContent = plateNumber;
-                document.getElementById("driverLoginSection").classList.add("hidden");
-                showDashboard();
-                loadDriverViolationsFromFirestore(plateNumber);
-            } else {
-                document.getElementById("driverLoginStatus").textContent = "Invalid plate or PIN.";
-            }
-        };
+        document.getElementById("licensePoints").textContent = points;
 
-        function loadDriverViolationsFromFirestore(plate) {
-            loadingIndicator.classList.remove('hidden');
-            const violationsRef = collection(db, `artifacts/${appId}/public/data/violations`);
-            const q = query(violationsRef, where("license", "==", plate));
-            
-            // onSnapshot provides real-time updates
-            onSnapshot(q, (querySnapshot) => {
-                loadingIndicator.classList.add('hidden');
-                const violations = [];
-                let points = 100;
+        const unpaidTable = document.getElementById("unpaidTable");
+        const paidTable = document.getElementById("paidTable");
 
-                querySnapshot.forEach((doc) => {
-                    const data = doc.data();
-                    violations.push({ id: doc.id, ...data, amountEth: 0.1 }); // Add default ETH amount
-                    if (data.status === "Unpaid") {
-                        points -= 10;
-                    }
-                });
+        const unpaid = violations.filter(v => v.status === "Unpaid");
+        const paid = violations.filter(v => v.status === "Paid");
 
-                document.getElementById("licensePoints").textContent = points;
-                
-                const unpaidTable = document.getElementById("unpaidTable");
-                const paidTable = document.getElementById("paidTable");
-
-                const unpaid = violations.filter(v => v.status === "Unpaid");
-                const paid = violations.filter(v => v.status === "Paid");
-
-                unpaidTable.innerHTML = unpaid.length ?
-                    unpaid.map(v => `
+        unpaidTable.innerHTML = unpaid.length ?
+          unpaid.map(v => `
                         <tr class="hover:bg-slate-700 transition-colors">
                             <td class="p-2 border-b border-slate-700">${v.type}</td>
                             <td class="p-2 border-b border-slate-700">${v.location}</td>
@@ -559,10 +562,10 @@
                             </td>
                         </tr>
                     `).join('') :
-                    `<tr><td colspan="5" class="p-2 text-center text-slate-500">No unpaid violations.</td></tr>`;
+          `<tr><td colspan="5" class="p-2 text-center text-slate-500">No unpaid violations.</td></tr>`;
 
-                paidTable.innerHTML = paid.length ?
-                    paid.map(v => `
+        paidTable.innerHTML = paid.length ?
+          paid.map(v => `
                         <tr class="hover:bg-slate-700 transition-colors">
                             <td class="p-2 border-b border-slate-700">${v.type}</td>
                             <td class="p-2 border-b border-slate-700">${v.location}</td>
@@ -571,41 +574,41 @@
                             <td class="p-2 border-b border-slate-700">${v.paidOn.slice(0, 16).replace('T', ' ')}</td>
                         </tr>
                     `).join('') :
-                    `<tr><td colspan="5" class="p-2 text-center text-slate-500">No paid violations.</td></tr>`;
+          `<tr><td colspan="5" class="p-2 text-center text-slate-500">No paid violations.</td></tr>`;
 
-            }, (error) => {
-                console.error("Failed to load driver violations:", error);
-                loadingIndicator.classList.add('hidden');
-                const unpaidTable = document.getElementById("unpaidTable");
-                unpaidTable.innerHTML = `<tr><td colspan="5" class="p-2 text-center text-red-500">Error loading data.</td></tr>`;
+      }, (error) => {
+        console.error("Failed to load driver violations:", error);
+        loadingIndicator.classList.add('hidden');
+        const unpaidTable = document.getElementById("unpaidTable");
+        unpaidTable.innerHTML = `<tr><td colspan="5" class="p-2 text-center text-red-500">Error loading data.</td></tr>`;
+      });
+    }
+
+    // Pay Violation using Firestore
+    window.payViolation = function (docId, amount) {
+      showCustomConfirm("Confirm Payment", `Are you sure you want to pay this violation? Amount: ${amount} ETH`, async (result) => {
+        if (result) {
+          try {
+            const violationRef = doc(db, `artifacts/${appId}/public/data/violations`, docId);
+            await updateDoc(violationRef, {
+              status: "Paid",
+              paidOn: new Date().toISOString()
             });
+            showStatusMessage("Payment Successful", `You have successfully paid ${amount} ETH.`, true);
+          } catch (e) {
+            console.error("Error updating document:", e);
+            showStatusMessage("Payment Failed", "There was an error processing your payment. Please try again.", false);
+          }
         }
+      });
+    };
 
-        // Pay Violation using Firestore
-        window.payViolation = function(docId, amount) {
-            showCustomConfirm("Confirm Payment", `Are you sure you want to pay this violation? Amount: ${amount} ETH`, async (result) => {
-                if (result) {
-                    try {
-                        const violationRef = doc(db, `artifacts/${appId}/public/data/violations`, docId);
-                        await updateDoc(violationRef, {
-                            status: "Paid",
-                            paidOn: new Date().toISOString()
-                        });
-                        showStatusMessage("Payment Successful", `You have successfully paid ${amount} ETH.`, true);
-                    } catch (e) {
-                        console.error("Error updating document:", e);
-                        showStatusMessage("Payment Failed", "There was an error processing your payment. Please try again.", false);
-                    }
-                }
-            });
-        };
-        
-        // Admin Ledger Logic (Untouched - using localStorage as per request)
-        function loadLedger() {
-            const ledgerTable = document.getElementById("ledgerTable");
-            let violations = JSON.parse(localStorage.getItem("violations") || "[]");
-            ledgerTable.innerHTML = violations.length ?
-                violations.map(v => `
+    // Admin Ledger Logic (Untouched - using localStorage as per request)
+    function loadLedger() {
+      const ledgerTable = document.getElementById("ledgerTable");
+      let violations = JSON.parse(localStorage.getItem("violations") || "[]");
+      ledgerTable.innerHTML = violations.length ?
+        violations.map(v => `
                 <tr class="hover:bg-slate-700 transition-colors">
                     <td class="p-2 border-b border-slate-700">${v.officer ? `${v.officer.slice(0, 6)}...${v.officer.slice(-4)}` : '-'}</td>
                     <td class="p-2 border-b border-slate-700">${v.license}</td>
@@ -616,32 +619,33 @@
                     <td class="p-2 border-b border-slate-700">${v.status}</td>
                 </tr>
             `).join('') :
-                `<tr><td colspan="7" class="p-2 text-center text-slate-500">No ledger data available.</td></tr>`;
+        `<tr><td colspan="7" class="p-2 text-center text-slate-500">No ledger data available.</td></tr>`;
+    }
+
+    // Admin Analytics Logic (Untouched - using localStorage as per request)
+    function loadAnalytics() {
+      const violations = JSON.parse(localStorage.getItem('violations') || '[]');
+      const locations = {};
+      const offenders = {};
+      let totalPaid = 0;
+
+      violations.forEach(v => {
+        locations[v.location] = (locations[v.location] || 0) + 1;
+        offenders[v.license] = (offenders[v.license] || 0) + 1;
+        if (v.status === 'Paid') {
+          // Assuming a flat 0.1 ETH per violation
+          totalPaid += 0.1;
         }
+      });
 
-        // Admin Analytics Logic (Untouched - using localStorage as per request)
-        function loadAnalytics() {
-            const violations = JSON.parse(localStorage.getItem('violations') || '[]');
-            const locations = {};
-            const offenders = {};
-            let totalPaid = 0;
+      const hotspotCount = Object.keys(locations).length;
+      const repeatOffenders = Object.values(offenders).filter(count => count > 1).length;
 
-            violations.forEach(v => {
-                locations[v.location] = (locations[v.location] || 0) + 1;
-                offenders[v.license] = (offenders[v.license] || 0) + 1;
-                if (v.status === 'Paid') {
-                    // Assuming a flat 0.1 ETH per violation
-                    totalPaid += 0.1;
-                }
-            });
-
-            const hotspotCount = Object.keys(locations).length;
-            const repeatOffenders = Object.values(offenders).filter(count => count > 1).length;
-
-            document.getElementById('hotspotCount').textContent = hotspotCount;
-            document.getElementById('repeatOffenders').textContent = repeatOffenders;
-            document.getElementById('revenueTotal').textContent = `${totalPaid} ETH`;
-        }
-    </script>
+      document.getElementById('hotspotCount').textContent = hotspotCount;
+      document.getElementById('repeatOffenders').textContent = repeatOffenders;
+      document.getElementById('revenueTotal').textContent = `${totalPaid} ETH`;
+    }
+  </script>
 </body>
+
 </html>
