@@ -18,6 +18,7 @@
     body {
       font-family: 'Inter', sans-serif;
       scroll-behavior: smooth;
+
     }
 
     #wallet-connect-modal,
@@ -241,8 +242,8 @@
       <!-- Admin Dashboard -->
       <section id="adminDashboard" class="w-full max-w-4xl bg-slate-800 rounded-xl shadow-md p-6 mb-8">
         <h2 class="text-xl font-bold mb-4 text-slate-200">Ledger Monitor</h2>
-        <!-- The overflow-x-auto class makes the div horizontally scrollable if its content overflows -->
-        <div class="overflow-x-auto rounded-lg">
+        <!-- Scrollable container with hidden scrollbar -->
+        <div class="overflow-x-auto rounded-lg hide-scrollbar">
           <table class="min-w-full text-sm table-auto border border-slate-700 mb-6">
             <thead class="bg-slate-700 text-slate-200">
               <tr>
@@ -274,7 +275,24 @@
           </div>
         </div>
       </section>
-    </div>
+
+      <style>
+        /* Hide horizontal scrollbar but allow scrolling */
+        .hide-scrollbar {
+          overflow-x: auto;
+          /* keep horizontal scroll functional */
+          scrollbar-width: none;
+          /* Firefox */
+          -ms-overflow-style: none;
+          /* IE 10+ */
+        }
+
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+          /* Chrome, Safari, Edge */
+        }
+      </style>
+
   </main>
 
   <script type="module">
