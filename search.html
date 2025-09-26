@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DLPT Violation Search Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Firebase SDKs -->
+    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            scroll-behavior: smooth;
+        }
+
+        /* Hide all modals/drawers as they are unused in this simple search view */
+        #wallet-connect-modal,
+        #custom-confirm-modal,
+        #notificationsDrawer,
+        #status-message-modal {
+            display: none !important;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            border-left-color: #3b82f6; /* Tailwind blue-500 */
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-slate-950 min-h-screen flex flex-col text-slate-200">
+    <!-- Header -->
+    <header class="bg-slate-900 text-slate-200 flex items-center justify-between px-4 py-3 shadow-md">
+        <div class="flex items-center gap-2">
+            <span class="text-2xl font-bold">🚦 DLPT</span>
+            <span class="hidden sm:inline text-sm font-semibold ml-2">Violation Search Portal</span>
+        </div>
+        <!-- Hide wallet/profile elements for this public search view -->
+        <div class="flex items-center gap-4">
+            <span class="text-slate-400 text-sm">Public Access</span>
+        </div>
+    </header>
+
+    <main class="flex flex-1 flex-col md:flex-row pb-16 md:pb-0">
+        <!-- Persistent Navigation (Retained for cross-page navigation) -->
+        <nav id="mainNav"
+            class="fixed bottom-0 left-0 z-50 w-full bg-slate-900 text-white p-2 flex justify-around md:static md:w-64 md:p-4 md:flex-col md:justify-start md:space-y-4 md:flex-none md:shadow-lg">
+            <a href="index.html" id="nav-home"
+                class="nav-link flex flex-col items-center md:flex-row gap-1 md:gap-2 px-2 py-1 md:p-3 rounded-lg hover:bg-slate-700 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M2.25 12l8.954-8.955c.44-.439 1.144-.439 1.583 0L21.75 12m-4.5 9a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" />
+                </svg>
+                <div class="font-bold text-xs md:text-base">Home</div>
+            </a>
+            <a href="transfer.html" id="nav-payment"
+                class="nav-link flex flex-col items-center md:flex-row gap-1 md:gap-2 px-2 py-1 md:p-3 rounded-lg hover:bg-slate-700 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M12 6v12m-3-9h6m-9-3h12a2 2 0 012 2v8a2 2 0 01-2 2H3a2 2 0 01-2-2V7a2 2 0 012-2h3z" />
+                </svg>
+                <div class="font-bold text-xs md:text-base">Payment</div>
+            </a>
+            <a href="officer.html" id="nav-officer"
+                class="nav-link flex flex-col items-center md:flex-row gap-1 md:gap-2 px-2 py-1 md:p-3 rounded-lg hover:bg-slate-700 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M15.75 6.75a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 19.5v-2.25a2.25 2.25 0 012.25-2.25h1.5a2.25 2.25 0 012.25 2.25v2.25m4.5-1.5h1.5a2.25 2.25 0 002.25-2.25V18" />
+                </svg>
+                <div class="font-bold text-xs md:text-base">Officer</div>
+            </a>
+            <a href="search.html" id="nav-driver"
+                class="nav-link flex flex-col items-center md:flex-row gap-1 md:gap-2 px-2 py-1 md:p-3 rounded-lg bg-slate-700 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M8.25 18L5.25 12M18.75 18L21.75 12M14.25 9l-2.25-6.75M12 9v6m-3-6H5.25M18.75 9H16.5M12 6a3 3 0 11-6 0 3 3 0 016 0zM18 6a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <div class="font-bold text-xs md:text-base">Search</div>
+            </a>
+            <a href="admin.html" id="nav-admin"
+                class="nav-link flex flex-col items-center md:flex-row gap-1 md:gap-2 px-2 py-1 md:p-3 rounded-lg hover:bg-slate-700 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M12 21.75a9.75 9.75 0 01-9.75-9.75V7.874a1.5 1.5 0 01.401-1.071l5.416-5.416a1.5 1.5 0 011.071-.401h6.25c.571 0 1.071.401 1.071 1.071v13.5c0 .571-.401 1.071-1.071 1.071H12z" />
+                </svg>
+                <div class="font-bold text-xs md:text-base">Admin</div>
+            </a>
+        </nav>
+
+        <!-- Main Content Area: Violation Search -->
+        <div class="flex-1 flex flex-col items-center px-4 py-8 order-1 md:order-none">
+            <section id="violationSearchSection" class="w-full max-w-4xl bg-slate-800 rounded-xl shadow-2xl p-6">
+                <h2 class="text-2xl font-bold mb-6 text-indigo-400">Search Traffic Violations</h2>
+                <p class="text-slate-400 mb-6">Enter a **License Plate Number** or a **Violation ID** to check the status of a fine.</p>
+
+                <div class="flex flex-col sm:flex-row gap-4 mb-8">
+                    <input type="text" id="searchQuery" placeholder="Enter Plate Number (e.g., ABC-123) or Violation ID" required
+                        class="flex-1 px-4 py-3 border border-slate-700 bg-slate-900 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 placeholder-slate-500 text-lg" />
+                    <button id="searchBtn"
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-all duration-300 transform active:scale-95 disabled:bg-indigo-900 disabled:opacity-50">
+                        <span id="searchBtnText">Search Violations</span>
+                    </button>
+                </div>
+
+                <!-- Loading Indicator -->
+                <div id="searchLoadingIndicator" class="flex items-center justify-center p-8 hidden">
+                    <div class="spinner mr-3"></div>
+                    <span class="text-slate-400 font-medium">Searching public ledger...</span>
+                </div>
+
+                <!-- Results Table -->
+                <div id="searchResultsContainer">
+                    <p id="searchResultsMessage" class="text-center text-slate-400 p-8 hidden">
+                        Enter a query and click search to view results.
+                    </p>
+                    <div class="overflow-x-auto rounded-lg">
+                        <table id="resultsTable" class="min-w-full text-sm table-auto border border-slate-700 hidden">
+                            <thead class="bg-slate-700 text-slate-200 sticky top-0">
+                                <tr>
+                                    <th class="p-3 text-left w-1/6">Type</th>
+                                    <th class="p-3 text-left w-1/6">Location</th>
+                                    <th class="p-3 text-left w-2/6">Timestamp</th>
+                                    <th class="p-3 text-left w-1/6">Amount (ETH)</th>
+                                    <th class="p-3 text-left w-1/6">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="resultsTableBody" class="bg-slate-800 text-slate-300">
+                                <!-- Results will be inserted here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </section>
+        </div>
+
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, query, where, getDocs, doc, getDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase Global Variables (MUST BE USED)
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // Initialize Firebase instances
+        let app;
+        let db;
+        let auth;
+
+        // UI Elements
+        const searchQueryInput = document.getElementById("searchQuery");
+        const searchBtn = document.getElementById("searchBtn");
+        const searchBtnText = document.getElementById("searchBtnText");
+        const searchLoadingIndicator = document.getElementById("searchLoadingIndicator");
+        const searchResultsMessage = document.getElementById("searchResultsMessage");
+        const resultsTable = document.getElementById("resultsTable");
+        const resultsTableBody = document.getElementById("resultsTableBody");
+
+        // --- Utility Functions ---
+
+        /**
+         * Shows a status message (used in the original code, kept for consistency 
+         * although not actively used in this simplified search view).
+         */
+        function showStatusMessage(title, message) {
+            // Note: In the final UI, the status modal is hidden by CSS.
+            console.log(`STATUS: ${title} - ${message}`);
+        }
+
+        /**
+         * Formats a raw timestamp (seconds/nanoseconds) into a readable string.
+         * @param {object|number} timestamp - Firestore Timestamp object or milliseconds.
+         * @returns {string} Localized date and time string.
+         */
+        function formatTimestamp(timestamp) {
+            if (timestamp && typeof timestamp.toDate === 'function') {
+                return timestamp.toDate().toLocaleString();
+            } else if (typeof timestamp === 'number') {
+                return new Date(timestamp).toLocaleString();
+            }
+            return 'N/A';
+        }
+
+        /**
+         * Renders the fetched violations into the results table.
+         * @param {Array} violations - Array of violation objects.
+         */
+        function renderViolations(violations) {
+            resultsTableBody.innerHTML = ''; // Clear previous results
+
+            if (violations.length === 0) {
+                resultsTable.classList.add('hidden');
+                searchResultsMessage.textContent = "No violations found matching the provided identifier.";
+                searchResultsMessage.classList.remove('hidden');
+                return;
+            }
+
+            searchResultsMessage.classList.add('hidden');
+            resultsTable.classList.remove('hidden');
+
+            const rows = violations.map(v => {
+                const statusColor = v.status === "Paid" ? 'text-green-400 font-semibold' : 'text-red-400 font-semibold';
+                const formattedTimestamp = formatTimestamp(v.timestamp);
+                const violationIdShort = v.id.slice(0, 8) + '...';
+
+                return `
+                    <tr class="hover:bg-slate-700 transition-colors">
+                        <td class="p-3 border-b border-slate-700">${v.type || 'Unknown'}</td>
+                        <td class="p-3 border-b border-slate-700">${v.location || 'Unknown'}</td>
+                        <td class="p-3 border-b border-slate-700">${formattedTimestamp}</td>
+                        <td class="p-3 border-b border-slate-700">${v.amountEth ? v.amountEth.toFixed(2) : '0.00'} ETH</td>
+                        <td class="p-3 border-b border-slate-700">
+                            <span class="${statusColor}">${v.status || 'N/A'}</span>
+                        </td>
+                    </tr>
+                    <!-- Optional detail row for ID -->
+                    <tr class="bg-slate-800 text-xs text-slate-500">
+                        <td class="px-3 pb-2 border-b border-slate-700" colspan="5">
+                            <span class="font-mono">Violation ID: ${v.id}</span>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            resultsTableBody.innerHTML = rows;
+        }
+
+
+        // --- Search Logic ---
+
+        /**
+         * Searches Firestore for violations matching the query (License Plate or Violation ID).
+         * @param {string} queryValue - The license plate number or potential violation ID.
+         */
+        async function searchViolations(queryValue) {
+            if (!db) {
+                console.error("Firestore is not initialized.");
+                searchResultsMessage.textContent = "Application error: Database not ready.";
+                searchResultsMessage.classList.remove('hidden');
+                return;
+            }
+
+            // Clean up the query value (case-insensitive search for plate)
+            const cleanedQuery = queryValue.trim().toUpperCase();
+            if (!cleanedQuery) return;
+
+            // UI state: Searching
+            searchBtn.disabled = true;
+            searchBtnText.textContent = 'Searching...';
+            searchLoadingIndicator.classList.remove('hidden');
+            resultsTable.classList.add('hidden');
+            resultsTableBody.innerHTML = '';
+            searchResultsMessage.classList.add('hidden');
+
+            const violationsRef = collection(db, `artifacts/${appId}/public/data/violations`);
+            let results = [];
+
+            try {
+                // 1. Attempt to search by LICENSE PLATE (more common scenario)
+                const plateQuery = query(violationsRef, where("license", "==", cleanedQuery));
+                const plateSnapshot = await getDocs(plateQuery);
+                
+                plateSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    results.push({ id: doc.id, ...data, amountEth: 0.1 }); // Mock ETH amount
+                });
+
+                // 2. If no plate results found, check if the query looks like a specific ID
+                if (results.length === 0 && cleanedQuery.length > 10) { 
+                    // Assuming a Violation ID (Firestore document ID) is usually a long string
+                    const docRef = doc(db, `artifacts/${appId}/public/data/violations`, cleanedQuery);
+                    const docSnap = await getDoc(docRef);
+
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        results.push({ id: docSnap.id, ...data, amountEth: 0.1 }); // Mock ETH amount
+                    }
+                }
+                
+                renderViolations(results);
+
+            } catch (error) {
+                console.error("Error executing violation search:", error);
+                searchResultsMessage.textContent = `An error occurred during search: ${error.message}.`;
+                searchResultsMessage.classList.remove('hidden');
+                resultsTable.classList.add('hidden');
+
+            } finally {
+                // UI state: Finished
+                searchLoadingIndicator.classList.add('hidden');
+                searchBtn.disabled = false;
+                searchBtnText.textContent = 'Search Violations';
+            }
+        }
+
+        // --- Event Listeners and Initialization ---
+
+        searchBtn.addEventListener('click', () => {
+            const query = searchQueryInput.value;
+            if (query.trim()) {
+                searchViolations(query);
+            } else {
+                searchResultsMessage.textContent = "Please enter a License Plate Number or Violation ID to search.";
+                searchResultsMessage.classList.remove('hidden');
+                resultsTable.classList.add('hidden');
+            }
+        });
+
+        searchQueryInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                searchBtn.click();
+            }
+        });
+
+        // --- App Setup ---
+        async function initializeApp() {
+            setLogLevel('Debug');
+            try {
+                if (!app) {
+                    app = initializeApp(firebaseConfig);
+                    auth = getAuth(app);
+                    db = getFirestore(app);
+
+                    // Sign in anonymously for public read access
+                    if (initialAuthToken) {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                    console.log("Firebase initialized and authenticated.");
+                }
+            } catch (err) {
+                console.error("Firebase initialization failed:", err);
+                showStatusMessage("Initialization Error", "Failed to connect to the database.");
+            }
+            
+            // Initial message display
+            searchResultsMessage.textContent = "Enter a plate number or violation ID and click search.";
+            searchResultsMessage.classList.remove('hidden');
+        }
+
+        window.addEventListener("DOMContentLoaded", initializeApp);
+
+    </script>
+</body>
+
+</html>

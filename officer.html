@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DLPT Officer Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@6.8.1/dist/ethers.umd.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            scroll-behavior: smooth;
+        }
+
+        #wallet-connect-modal {
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+        }
+    </style>
+</head>
+
+<!-- Updated body and header colors to dark grays and slates -->
+
+<body class="bg-slate-950 text-slate-200 min-h-screen flex flex-col pb-[70px] md:pb-0">
+    <!-- Header -->
+    <header class="bg-slate-800 text-white flex items-center justify-between px-4 py-3 shadow-md">
+        <div class="flex items-center gap-2">
+            <span class="text-2xl font-bold">🚦 DLPT</span>
+            <span class="hidden sm:inline text-sm font-semibold ml-2">Officer Dashboard</span>
+        </div>
+        <div class="flex items-center gap-4">
+            <button id="notificationsBtn" class="relative text-xl hover:text-slate-400 hidden"
+                aria-label="Notifications">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.964 3.973 1.514 6.257 1.491m-4.44-4.288c.951-.157 1.704-.764 2.052-1.472M20.59 10.966c-.686-.239-1.391-.453-2.112-.64c.241-.11.48-.225.711-.345M12 18.75a2.25 2.25 0 002.25-2.25v-.75m-4.5 0v.75a2.25 2.25 0 002.25 2.25z" />
+                </svg>
+                <span id="notifDot" class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full hidden"></span>
+            </button>
+            <div id="profile" class="hidden items-center gap-2 bg-slate-700 px-3 py-1 rounded-full text-sm font-mono">
+                <span id="walletShort"></span>
+                <span id="officerRole" class="ml-2 bg-slate-600 px-2 py-1 rounded-full text-xs font-bold">Officer</span>
+            </div>
+            <button id="connectWalletBtn"
+                class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-full shadow-lg transition-all duration-300 transform active:scale-95">
+                Connect Wallet
+            </button>
+            <button id="disconnectWalletBtn"
+                class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-full shadow-lg transition-all duration-300 transform active:scale-95 hidden">
+                Disconnect
+            </button>
+        </div>
+    </header>
+
+    <!-- Wallet Connect Modal -->
+    <div id="wallet-connect-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+        <div class="bg-slate-800 text-white rounded-xl shadow-2xl p-8 max-w-sm w-full text-center">
+            <h3 class="text-xl font-bold mb-4">Connecting to Wallet...</h3>
+            <p class="text-slate-400">Please approve the connection in your wallet application.</p>
+        </div>
+    </div>
+
+    <!-- Notifications Drawer -->
+    <div id="notificationsDrawer"
+        class="fixed top-0 right-0 w-80 max-w-full h-full bg-slate-800 text-white shadow-lg z-50 p-6 hidden flex-col">
+        <div class="flex justify-between items-center mb-4">
+            <span class="text-lg font-bold text-slate-200">Notifications</span>
+            <button onclick="document.getElementById('notificationsDrawer').classList.add('hidden')" class="text-xl">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <ul id="notificationsList" class="space-y-3 text-slate-300"></ul>
+    </div>
+
+    <main class="flex flex-1 flex-col md:flex-row">
+        <!-- Persistent Navigation -->
+        <nav id="mainNav"
+            class="fixed bottom-0 left-0 z-50 w-full bg-slate-900 text-white p-2 flex justify-around md:static md:w-64 md:p-4 md:flex-col md:justify-start md:space-y-4 md:flex-none md:shadow-lg">
+            <a href="index.html" id="nav-home"
+                class="nav-link flex flex-col items-center md:flex-row gap-1 md:gap-2 px-2 py-1 md:p-3 rounded-lg hover:bg-slate-700 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M2.25 12l8.954-8.955c.44-.439 1.144-.439 1.583 0L21.75 12m-4.5 9a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" />
+                </svg>
+                <div class="font-bold text-xs md:text-base">Home</div>
+            </a>
+            <a href="transfer.html" id="nav-payment"
+                class="nav-link flex flex-col items-center md:flex-row gap-1 md:gap-2 px-2 py-1 md:p-3 rounded-lg hover:bg-slate-700 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M12 6v12m-3-9h6m-9-3h12a2 2 0 012 2v8a2 2 0 01-2 2H3a2 2 0 01-2-2V7a2 2 0 012-2h3z" />
+                </svg>
+                <div class="font-bold text-xs md:text-base">Payment</div>
+            </a>
+            <a href="officer.html" id="nav-officer"
+                class="nav-link flex flex-col items-center md:flex-row gap-1 md:gap-2 px-2 py-1 md:p-3 rounded-lg hover:bg-slate-700 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M15.75 6.75a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 19.5v-2.25a2.25 2.25 0 012.25-2.25h1.5a2.25 2.25 0 012.25 2.25v2.25m4.5-1.5h1.5a2.25 2.25 0 002.25-2.25V18" />
+                </svg>
+                <div class="font-bold text-xs md:text-base">Officer</div>
+            </a>
+            <a href="search.html" id="nav-driver"
+                class="nav-link flex flex-col items-center md:flex-row gap-1 md:gap-2 px-2 py-1 md:p-3 rounded-lg hover:bg-slate-700 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M8.25 18L5.25 12M18.75 18L21.75 12M14.25 9l-2.25-6.75M12 9v6m-3-6H5.25M18.75 9H16.5M12 6a3 3 0 11-6 0 3 3 0 016 0zM18 6a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <div class="font-bold text-xs md:text-base">Driver</div>
+            </a>
+            <a href="admin.html" id="nav-admin"
+                class="nav-link flex flex-col items-center md:flex-row gap-1 md:gap-2 px-2 py-1 md:p-3 rounded-lg hover:bg-slate-700 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M12 21.75a9.75 9.75 0 01-9.75-9.75V7.874a1.5 1.5 0 01.401-1.071l5.416-5.416a1.5 1.5 0 011.071-.401h6.25c.571 0 1.071.401 1.071 1.071v13.5c0 .571-.401 1.071-1.071 1.071H12z" />
+                </svg>
+                <div class="font-bold text-xs md:text-base">Admin</div>
+            </a>
+        </nav>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col items-center px-4 py-8 order-1 md:order-none">
+            <!-- Updated form and table card backgrounds and text colors -->
+            <section class="w-full max-w-lg bg-slate-800 text-slate-200 rounded-xl shadow-md p-6 mb-8">
+                <h2 class="text-xl font-bold mb-4 text-slate-200">Issue Violation Ticket</h2>
+                <form id="violationForm" class="space-y-4">
+                    <div>
+                        <label for="violatorAddress" class="block font-medium mb-1">Violator's Wallet:</label>
+                        <input type="text" id="violatorAddress" placeholder="e.g., 0x..." required
+                            class="w-full px-4 py-2 bg-slate-700 text-slate-200 border border-slate-600 rounded-md" />
+                    </div>
+                    <div>
+                        <label for="licenseNumber" class="block font-medium mb-1">Plate Number:</label>
+                        <input type="text" id="licenseNumber" placeholder="License Number" required
+                            class="w-full px-4 py-2 bg-slate-700 text-slate-200 border border-slate-600 rounded-md" />
+                    </div>
+                    <div>
+                        <label for="violationType" class="block font-medium mb-1">Violation Type:</label>
+                        <select id="violationType" required
+                            class="w-full px-4 py-2 bg-slate-700 text-slate-200 border border-slate-600 rounded-md">
+                            <option value="">Select Violation Type</option>
+                            <option value="Overspeeding">Overspeeding</option>
+                            <option value="Illegal Parking">Illegal Parking</option>
+                            <option value="No Helmet">No Helmet</option>
+                            <option value="Red Light">Red Light Violation</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="violationAmount" class="block font-medium mb-1">Violation Amount (ETH):</label>
+                        <input type="number" id="violationAmount" value="0.01" step="any" required
+                            class="w-full px-4 py-2 bg-slate-700 text-slate-200 border border-slate-600 rounded-md" />
+                    </div>
+                    <div>
+                        <label for="location" class="block font-medium mb-1">Location:</label>
+                        <input type="text" id="location" placeholder="Location" required
+                            class="w-full px-4 py-2 bg-slate-700 text-slate-200 border border-slate-600 rounded-md" />
+                    </div>
+                    <div>
+                        <label for="timestamp" class="block font-medium mb-1">Timestamp:</label>
+                        <input type="datetime-local" id="timestamp" required
+                            class="w-full px-4 py-2 bg-slate-700 text-slate-200 border border-slate-600 rounded-md" />
+                    </div>
+                    <button type="submit"
+                        class="w-full bg-indigo-600 hover:bg-indigo-500 hover:bg-slate-600 text-white font-semibold py-2 rounded-md transition-all duration-300 transform active:scale-95">
+                        Issue Violation
+                    </button>
+                </form>
+                <p id="status" class="mt-4 text-sm text-slate-400"></p>
+            </section>
+
+            <section class="w-full max-w-2xl bg-slate-800 text-slate-200 rounded-xl shadow-md p-6 mb-8">
+                <h2 class="text-xl font-bold mb-4 text-slate-200">Your Issued Violations</h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm table-auto border border-slate-600">
+                        <thead class="bg-slate-700 text-white">
+                            <tr>
+                                <th class="p-2 text-left">License #</th>
+                                <th class="p-2 text-left">Violator's Wallet</th>
+                                <th class="p-2 text-left">Type</th>
+                                <th class="p-2 text-left">Amount</th>
+                                <th class="p-2 text-left">Location</th>
+                                <th class="p-2 text-left">Timestamp</th>
+                                <th class="p-2 text-left">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTable" class="bg-slate-800 text-slate-300"></tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        // Wallet Connect & Disconnect Logic
+        const connectWalletBtn = document.getElementById("connectWalletBtn");
+        const disconnectWalletBtn = document.getElementById("disconnectWalletBtn");
+        const walletConnectModal = document.getElementById("wallet-connect-modal");
+        const profile = document.getElementById("profile");
+        const walletShort = document.getElementById("walletShort");
+        const notificationsBtn = document.getElementById("notificationsBtn");
+        const officerRole = document.getElementById("officerRole");
+        let officerWallet = null;
+
+        // Notifications Logic
+        const notificationsDrawer = document.getElementById("notificationsDrawer");
+        const notificationsList = document.getElementById("notificationsList");
+        const notifDot = document.getElementById("notifDot");
+
+        notificationsBtn.onclick = () => {
+            notificationsDrawer.classList.remove("hidden");
+            notifDot.classList.add("hidden");
+            notificationsList.innerHTML = `<li class="text-center text-slate-400">No new notifications.</li>`;
+        };
+        const demoNotifs = [
+            "2 violations unpaid by drivers.",
+            "System: New violation type added.",
+            "Reminder: Review issued tickets."
+        ];
+        if (sessionStorage.getItem("walletAddress")) {
+            notificationsList.innerHTML = demoNotifs.map(n => `<li class="border-b border-slate-600 pb-2">${n}</li>`).join('');
+            notifDot.classList.remove("hidden");
+        }
+
+
+        // --- Wallet Connection Logic ---
+        function updateUIForConnectedState(address) {
+            const short = `${address.slice(0, 6)}...${address.slice(-4)}`;
+            walletShort.textContent = short;
+            profile.classList.remove("hidden");
+            notificationsBtn.classList.remove("hidden");
+            officerRole.classList.remove("hidden");
+            connectWalletBtn.classList.add("hidden");
+            disconnectWalletBtn.classList.remove("hidden");
+        }
+
+        function updateUIForDisconnectedState() {
+            profile.classList.add("hidden");
+            notificationsBtn.classList.add("hidden");
+            officerRole.classList.add("hidden");
+            connectWalletBtn.classList.remove("hidden");
+            disconnectWalletBtn.classList.add("hidden");
+        }
+
+        connectWalletBtn.onclick = async () => {
+            if (!window.ethereum) {
+                walletConnectModal.classList.remove("hidden");
+                walletConnectModal.querySelector('h3').textContent = 'Please Install MetaMask';
+                walletConnectModal.querySelector('p').textContent = 'You need a Web3 wallet like MetaMask to connect.';
+                setTimeout(() => {
+                    walletConnectModal.classList.add("hidden");
+                }, 3000);
+                return;
+            }
+            walletConnectModal.classList.remove("hidden");
+            try {
+                const provider = new ethers.BrowserProvider(window.ethereum);
+                const accounts = await provider.send("eth_requestAccounts", []);
+                officerWallet = accounts[0];
+                sessionStorage.setItem("walletAddress", officerWallet);
+                updateUIForConnectedState(officerWallet);
+                walletConnectModal.classList.add("hidden");
+                loadHistory();
+            } catch (err) {
+                console.error("Wallet connection failed:", err);
+                walletConnectModal.classList.add("hidden");
+            }
+        };
+
+        disconnectWalletBtn.onclick = () => {
+            sessionStorage.removeItem("walletAddress");
+            updateUIForDisconnectedState();
+            officerWallet = null;
+            loadHistory();
+        };
+
+        window.addEventListener("DOMContentLoaded", () => {
+            const savedAddress = sessionStorage.getItem("walletAddress");
+            if (savedAddress) {
+                officerWallet = savedAddress;
+                updateUIForConnectedState(savedAddress);
+                loadHistory();
+            } else {
+                updateUIForDisconnectedState();
+            }
+        });
+
+        // Issue Violation Logic (demo, replace with blockchain tx)
+        const violationForm = document.getElementById("violationForm");
+        const status = document.getElementById("status");
+        violationForm.onsubmit = async (e) => {
+            e.preventDefault();
+            if (!officerWallet) {
+                status.textContent = "Connect wallet first.";
+                return;
+            }
+            const violatorAddress = document.getElementById("violatorAddress").value.trim();
+            const license = document.getElementById("licenseNumber").value.trim();
+            const type = document.getElementById("violationType").value;
+            const amount = document.getElementById("violationAmount").value;
+            const location = document.getElementById("location").value.trim();
+            const timestamp = document.getElementById("timestamp").value;
+            // Simulate blockchain tx
+            let violations = JSON.parse(localStorage.getItem("violations") || "[]");
+            violations.push({
+                officer: officerWallet,
+                violator: violatorAddress,
+                license,
+                type,
+                amount,
+                location,
+                timestamp,
+                status: "Unpaid"
+            });
+            localStorage.setItem("violations", JSON.stringify(violations));
+            status.textContent = "Violation issued successfully!";
+            violationForm.reset();
+            loadHistory();
+        };
+
+        // Load Officer's Issued Violations
+        function loadHistory() {
+            const historyTable = document.getElementById("historyTable");
+            let violations = JSON.parse(localStorage.getItem("violations") || "[]");
+            const myViolations = violations.filter(v => v.officer === officerWallet);
+            historyTable.innerHTML = myViolations.length ?
+                myViolations.map(v => `
+                <tr>
+                    <td class="p-2">${v.license}</td>
+                    <td class="p-2 break-all">${v.violator}</td>
+                    <td class="p-2">${v.type}</td>
+                    <td class="p-2">${v.amount} ETH</td>
+                    <td class="p-2">${v.location}</td>
+                    <td class="p-2">${v.timestamp.replace('T', ' ')}</td>
+                    <td class="p-2">${v.status}</td>
+                </tr>
+            `).join('') :
+                `<tr><td colspan="7" class="p-2 text-center text-slate-400">No violations issued yet.</td></tr>`;
+        }
+    </script>
+</body>
+
+</html>
