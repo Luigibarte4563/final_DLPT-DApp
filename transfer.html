@@ -19,9 +19,31 @@
         }
 
         /* Modal backdrop for visual effect */
-        #wallet-connect-modal {
-            background-color: rgba(0, 0, 0, 0.6);
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.7);
             backdrop-filter: blur(5px);
+        }
+
+        /* Simple CSS Spinner for the modal */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3b82f6;
+            /* Tailwind indigo-500 */
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         /* Classes to control content visibility for multi-page simulation */
@@ -44,41 +66,89 @@
         </div>
         <div class="flex items-center gap-4">
             <!-- Notifications button (hidden by default) -->
-            <button id="notificationsBtn" class="relative text-xl hover:text-slate-300 hidden" aria-label="Notifications">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.964 3.973 1.514 6.257 1.491m-4.44-4.288c.951-.157 1.704-.764 2.052-1.472M20.59 10.966c-.686-.239-1.391-.453-2.112-.64c.241-.11.48-.225.711-.345M12 18.75a2.25 2.25 0 002.25-2.25v-.75m-4.5 0v.75a2.25 2.25 0 002.25 2.25z" />
+            <button id="notificationsBtn" class="relative text-xl hover:text-slate-300 hidden"
+                aria-label="Notifications">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.964 3.973 1.514 6.257 1.491m-4.44-4.288c.951-.157 1.704-.764 2.052-1.472M20.59 10.966c-.686-.239-1.391-.453-2.112-.64c.241-.11.48-.225.711-.345M12 18.75a2.25 2.25 0 002.25-2.25v-.75m-4.5 0v.75a2.25 2.25 0 002.25 2.25z" />
                 </svg>
                 <span id="notifDot" class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full hidden"></span>
             </button>
             <!-- Profile display (hidden by default) -->
-            <div id="profile" class="hidden items-center gap-2 bg-slate-800 px-3 py-1 rounded-full text-sm font-mono">
+            <div id="profile"
+                class="hidden items-center gap-2 bg-slate-800 px-3 py-1 rounded-full text-sm font-mono">
                 <span id="walletShort"></span>
-                <span id="officerRole" class="ml-2 bg-slate-700 px-2 py-1 rounded-full text-xs font-bold hidden">Officer</span>
+                <span id="officerRole"
+                    class="ml-2 bg-slate-700 px-2 py-1 rounded-full text-xs font-bold hidden">Officer</span>
             </div>
             <!-- Wallet connection buttons -->
-            <button id="connectWalletBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-full shadow-lg transition-all duration-300 transform active:scale-95">
+            <!-- Renamed ID from connectWalletBtn to connectUnifiedBtn to match the script -->
+            <button id="connectUnifiedBtn"
+                class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-full shadow-lg transition-all duration-300 transform active:scale-95">
                 Connect Wallet
             </button>
-            <button id="disconnectWalletBtn" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-full shadow-lg transition-all duration-300 transform active:scale-95 hidden">
+            <button id="disconnectWalletBtn"
+                class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-full shadow-lg transition-all duration-300 transform active:scale-95 hidden">
                 Disconnect
             </button>
         </div>
     </header>
 
-    <!-- Wallet Connect Modal -->
-    <div id="wallet-connect-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+    <!-- Modal 1: Connection Options (Hidden by default) -->
+    <div id="connection-options-modal"
+        class="fixed inset-0 z-50 flex items-center justify-center modal-backdrop hidden">
+        <div class="bg-slate-800 rounded-xl shadow-2xl p-8 max-w-xs w-full text-center text-gray-300 transform transition-all duration-300">
+            <h3 class="text-2xl font-bold mb-6 text-white">Select Wallet</h3>
+            <div class="space-y-4">
+                <button id="selectMetaMaskBtn"
+                    class="w-full flex items-center justify-center gap-3 bg-orange-600 hover:bg-orange-500 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200">
+                    <svg role="img" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                        <path
+                            d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8zM12 6.5l-4.5 2.5 4.5 2.5 4.5-2.5-4.5-2.5zM7.5 12l-4.5 2.5 4.5 2.5 4.5-2.5-4.5-2.5zM12 12l-4.5 2.5 4.5 2.5 4.5-2.5-4.5-2.5z" />
+                    </svg>
+                    MetaMask
+                </button>
+                <button id="selectZkLoginBtn"
+                    class="w-full flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200">
+                    <svg role="img" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+                        <path
+                            d="M23.7669 12.2764C23.7669 11.4586 23.6994 11.2346 23.5701 10.4578H12.2475V13.7962H18.4239C17.9234 16.3245 15.6599 18.0673 12.2475 18.0673C7.9472 18.0673 4.41783 14.5379 4.41783 10.2376C4.41783 5.93731 7.9472 2.40794 12.2475 2.40794C14.7351 2.40794 16.5912 3.42461 17.8485 4.60537L20.2486 2.20526C18.1721 0.35414 15.3995 -0.589111 12.2475 -0.589111C5.69838 -0.589111 0.247468 4.86175 0.247468 11.4109C0.247468 17.96 5.69838 23.4109 12.2475 23.4109C18.6652 23.4109 23.8234 17.7552 23.8234 11.4109C23.8234 10.9996 23.7995 10.5962 23.7669 10.2081H12.2475V8.12569H23.7669C23.7669 8.12569 23.7669 12.2764 23.7669 12.2764Z" />
+                    </svg>
+                    zkLogin (Google)
+                </button>
+            </div>
+            <!-- Close button for the modal backdrop (allows clicking outside to close) -->
+            <button onclick="document.getElementById('connection-options-modal').classList.add('hidden')"
+                class="mt-4 text-sm text-gray-500 hover:text-gray-400">
+                Cancel
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal 2: Connection Status & Spinner (Enhanced existing modal) -->
+    <div id="wallet-connect-modal"
+        class="fixed inset-0 z-50 flex items-center justify-center modal-backdrop hidden">
         <div class="bg-slate-800 rounded-xl shadow-2xl p-8 max-w-sm w-full text-center text-gray-300">
-            <h3 class="text-xl font-bold mb-4">Connecting to Wallet...</h3>
-            <p class="text-gray-400">Please approve the connection in your wallet application.</p>
+            <!-- Spinner / Success Checkmark Placeholder -->
+            <div id="modal-spinner" class="h-8 mb-4"></div>
+            <h3 id="modal-title" class="text-xl font-bold mb-2">Connecting to Wallet...</h3>
+            <p id="modal-message" class="text-gray-400">Please approve the connection in your wallet application.</p>
+            <button onclick="document.getElementById('wallet-connect-modal').classList.add('hidden')"
+                class="mt-6 text-sm text-gray-500 hover:text-gray-400">
+                Close
+            </button>
         </div>
     </div>
 
     <!-- Notifications Drawer -->
-    <div id="notificationsDrawer" class="fixed top-0 right-0 w-80 max-w-full h-full bg-slate-800 shadow-lg z-50 p-6 hidden flex-col">
+    <div id="notificationsDrawer"
+        class="fixed top-0 right-0 w-80 max-w-full h-full bg-slate-800 shadow-lg z-50 p-6 hidden flex-col">
         <div class="flex justify-between items-center mb-4">
             <span class="text-lg font-bold text-gray-300">Notifications</span>
             <button onclick="document.getElementById('notificationsDrawer').classList.add('hidden')" class="text-xl">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" class="w-6 h-6">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </button>
@@ -89,34 +159,50 @@
 
     <main class="flex-1 flex flex-col md:flex-row pb-20 md:pb-0">
         <!-- Persistent Navigation: fixed at the bottom on mobile, side on desktop -->
-        <nav id="mainNav" class="bg-slate-900 text-white p-2 flex justify-around md:p-4 md:flex-col md:w-64 md:justify-start md:space-y-4 md:flex-none md:shadow-lg order-2 md:order-none fixed md:relative bottom-0 left-0 right-0 z-50">
-            <a href="index.html" class="nav-link flex flex-col items-center md:flex-row gap-1 md:gap-2 px-2 py-1 md:p-3 rounded-lg hover:bg-slate-700 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.144-.439 1.583 0L21.75 12m-4.5 9a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" />
+        <nav id="mainNav"
+            class="bg-slate-900 text-white p-2 flex justify-around md:p-4 md:flex-col md:w-64 md:justify-start md:space-y-4 md:flex-none md:shadow-lg order-2 md:order-none fixed md:relative bottom-0 left-0 right-0 z-50">
+            <a href="index.html"
+                class="nav-link flex flex-col items-center md:flex-row gap-1 md:gap-2 px-2 py-1 md:p-3 rounded-lg hover:bg-slate-700 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M2.25 12l8.954-8.955c.44-.439 1.144-.439 1.583 0L21.75 12m-4.5 9a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" />
                 </svg>
                 <div class="font-bold text-xs md:text-base">Home</div>
             </a>
-            <a href="transfer.html" class="nav-link flex flex-col items-center md:flex-row gap-1 md:gap-2 px-2 py-1 md:p-3 rounded-lg hover:bg-slate-700 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-9h6m-9-3h12a2 2 0 012 2v8a2 2 0 01-2 2H3a2 2 0 01-2-2V7a2 2 0 012-2h3z" />
+            <a href="transfer.html"
+                class="nav-link flex flex-col items-center md:flex-row gap-1 md:gap-2 px-2 py-1 md:p-3 rounded-lg hover:bg-slate-700 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M12 6v12m-3-9h6m-9-3h12a2 2 0 012 2v8a2 2 0 01-2 2H3a2 2 0 01-2-2V7a2 2 0 012-2h3z" />
                 </svg>
                 <div class="font-bold text-xs md:text-base">Payment</div>
             </a>
-            <a href="officer.html" class="nav-link flex flex-col items-center md:flex-row gap-1 md:gap-2 px-2 py-1 md:p-3 rounded-lg hover:bg-slate-700 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6.75a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 19.5v-2.25a2.25 2.25 0 012.25-2.25h1.5a2.25 2.25 0 012.25 2.25v2.25m4.5-1.5h1.5a2.25 2.25 0 002.25-2.25V18" />
+            <a href="officer.html"
+                class="nav-link flex flex-col items-center md:flex-row gap-1 md:gap-2 px-2 py-1 md:p-3 rounded-lg hover:bg-slate-700 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M15.75 6.75a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 19.5v-2.25a2.25 2.25 0 012.25-2.25h1.5a2.25 2.25 0 012.25 2.25v2.25m4.5-1.5h1.5a2.25 2.25 0 002.25-2.25V18" />
                 </svg>
                 <div class="font-bold text-xs md:text-base">Officer</div>
             </a>
-            <a href="search.html" class="nav-link flex flex-col items-center md:flex-row gap-1 md:gap-2 px-2 py-1 md:p-3 rounded-lg hover:bg-slate-700 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18L5.25 12M18.75 18L21.75 12M14.25 9l-2.25-6.75M12 9v6m-3-6H5.25M18.75 9H16.5M12 6a3 3 0 11-6 0 3 3 0 016 0zM18 6a3 3 0 11-6 0 3 3 0 016 0z" />
+            <a href="notary-records.html"
+                class="nav-link flex flex-col items-center md:flex-row gap-1 md:gap-2 px-2 py-1 md:p-3 rounded-lg hover:bg-slate-700 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M8.25 18L5.25 12M18.75 18L21.75 12M14.25 9l-2.25-6.75M12 9v6m-3-6H5.25M18.75 9H16.5M12 6a3 3 0 11-6 0 3 3 0 016 0zM18 6a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
                 <div class="font-bold text-xs md:text-base">Driver</div>
             </a>
-            <a href="notary-records.html" class="nav-link flex flex-col items-center md:flex-row gap-1 md:gap-2 px-2 py-1 md:p-3 rounded-lg hover:bg-slate-700 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 21.75a9.75 9.75 0 01-9.75-9.75V7.874a1.5 1.5 0 01.401-1.071l5.416-5.416a1.5 1.5 0 011.071-.401h6.25c.571 0 1.071.401 1.071 1.071v13.5c0 .571-.401 1.071-1.071 1.071H12z" />
+            <a href="notary-records.html"
+                class="nav-link flex flex-col items-center md:flex-row gap-1 md:gap-2 px-2 py-1 md:p-3 rounded-lg hover:bg-slate-700 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M12 21.75a9.75 9.75 0 01-9.75-9.75V7.874a1.5 1.5 0 01.401-1.071l5.416-5.416a1.5 1.5 0 011.071-.401h6.25c.571 0 1.071.401 1.071 1.071v13.5c0 .571-.401 1.071-1.071 1.071H12z" />
                 </svg>
                 <div class="font-bold text-xs md:text-base">Admin</div>
             </a>
@@ -131,17 +217,21 @@
                     <form id="paymentForm" class="space-y-4">
                         <div>
                             <label for="plateNumber" class="block font-medium mb-1">Plate Number:</label>
-                            <input type="text" id="plateNumber" required placeholder="e.g. S9-420-W" class="w-full px-4 py-2 border border-gray-600 rounded-md bg-slate-700 focus:ring-2 focus:ring-slate-500" />
+                            <input type="text" id="plateNumber" required placeholder="e.g. S9-420-W"
+                                class="w-full px-4 py-2 border border-gray-600 rounded-md bg-slate-700 focus:ring-2 focus:ring-slate-500" />
                         </div>
                         <div>
                             <label for="paymentAddress" class="block font-medium mb-1">Payment Address:</label>
-                            <input type="text" id="paymentAddress" placeholder="e.g. 0x597..." class="w-full px-4 py-2 border border-gray-600 rounded-md bg-slate-700 focus:ring-2 focus:ring-slate-500" />
+                            <input type="text" id="paymentAddress" placeholder="e.g. 0x597..."
+                                class="w-full px-4 py-2 border border-gray-600 rounded-md bg-slate-700 focus:ring-2 focus:ring-slate-500" />
                         </div>
                         <div>
                             <label for="amount" class="block font-medium mb-1">Amount (ETH):</label>
-                            <input type="number" id="amount" step="0.01" required placeholder="e.g. 0.05" class="w-full px-4 py-2 border border-gray-600 rounded-md bg-slate-700 focus:ring-2 focus:ring-slate-500" />
+                            <input type="number" id="amount" step="0.01" required placeholder="e.g. 0.05"
+                                class="w-full px-4 py-2 border border-gray-600 rounded-md bg-slate-700 focus:ring-2 focus:ring-slate-500" />
                         </div>
-                        <button id="submitBtn" type="submit" disabled class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-md opacity-50 cursor-not-allowed transition-all duration-300 transform active:scale-95">
+                        <button id="submitBtn" type="submit" disabled
+                            class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-md opacity-50 cursor-not-allowed transition-all duration-300 transform active:scale-95">
                             Pay Fine
                         </button>
                     </form>
@@ -171,7 +261,6 @@
     <!-- Wallet + Contract Logic -->
     <script>
         // Placeholder for a simple contract to simulate interactions.
-        // In a real application, this would be a real contract address and ABI.
         const CONTRACT_ADDRESS = "0x597293BEf8B918eBF45c23Dc8a7D2d265FE5D3Aa";
         const CONTRACT_ABI = [
             // PayFine function
@@ -201,175 +290,237 @@
 
         // Global variables for ethers
         let provider, signer, contract;
+        let userWallet = null;
 
-        // --- DOM Elements ---
-        const connectWalletBtn = document.getElementById("connectWalletBtn");
+        // --- Element References ---
+        const connectUnifiedBtn = document.getElementById("connectUnifiedBtn"); // New unified button
+        const selectMetaMaskBtn = document.getElementById("selectMetaMaskBtn");
+        const selectZkLoginBtn = document.getElementById("selectZkLoginBtn");
         const disconnectWalletBtn = document.getElementById("disconnectWalletBtn");
-        const walletConnectModal = document.getElementById("wallet-connect-modal");
+
+        const connectionOptionsModal = document.getElementById("connection-options-modal");
+        const walletConnectModal = document.getElementById("wallet-connect-modal"); // Status Modal
+        const modalTitle = document.getElementById("modal-title");
+        const modalMessage = document.getElementById("modal-message");
+        const modalSpinner = document.getElementById("modal-spinner");
+
         const profile = document.getElementById("profile");
         const walletShort = document.getElementById("walletShort");
-        const form = document.getElementById('paymentForm');
-        const submitBtn = document.getElementById('submitBtn');
-        const status = document.getElementById('status');
         const notificationsBtn = document.getElementById("notificationsBtn");
+        const officerRole = document.getElementById("officerRole");
         const notificationsDrawer = document.getElementById("notificationsDrawer");
         const notificationsList = document.getElementById("notificationsList");
         const notifDot = document.getElementById("notifDot");
-        const officerRole = document.getElementById("officerRole");
-        let userWallet = null;
 
-        // --- Notifications Logic ---
-        const demoNotifs = [
-            "You have 2 unpaid violations.",
-            "Officer: New violation issued.",
-            "Admin: Spike in violations detected."
-        ];
+        const form = document.getElementById('paymentForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const status = document.getElementById('status');
 
-        notificationsBtn.onclick = () => {
-            notificationsDrawer.classList.remove("hidden");
-            notifDot.classList.add("hidden");
-            notificationsList.innerHTML = `<li class="text-center text-gray-500">No new notifications.</li>`;
-        };
 
-        // --- Wallet Connection Logic ---
+        // --- Utility Functions ---
 
         /**
-         * Updates the UI to a connected state.
-         * @param {string} address The wallet address to display.
+         * Sets the content and visibility of the connection status modal.
+         * @param {string} title
+         * @param {string} message
+         * @param {boolean} showSpinner
+         * @param {boolean} isSuccess
          */
+        function setModalState(title, message, showSpinner, isSuccess = false) {
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+
+            modalSpinner.innerHTML = ''; // Reset checkmark/spinner placeholder
+
+            // Ensure spinner element is visible initially for spinner or checkmark
+            modalSpinner.classList.remove("hidden");
+
+            if (showSpinner) {
+                modalSpinner.classList.remove("loader");
+                modalSpinner.classList.add("loader"); // Re-add to ensure animation restarts if needed
+            } else {
+                modalSpinner.classList.remove("loader");
+                if (isSuccess) {
+                    // Display checkmark for success
+                    modalSpinner.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-8 h-8 text-green-500 mx-auto mb-2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>';
+                } else {
+                    // Display X for error
+                    modalSpinner.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-8 h-8 text-red-500 mx-auto mb-2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>';
+                }
+            }
+            walletConnectModal.classList.remove("hidden");
+        }
+
+
+        /** Updates the UI to show the user as connected. */
         function updateUIForConnectedState(address) {
             const short = `${address.slice(0, 6)}...${address.slice(-4)}`;
             walletShort.textContent = short;
+
             profile.classList.remove("hidden");
-            connectWalletBtn.classList.add("hidden");
+            notificationsBtn.classList.remove("hidden");
+            officerRole.classList.remove("hidden");
+
+            // Hide the unified connect button
+            connectUnifiedBtn.classList.add("hidden");
+
+            // Show disconnect button
             disconnectWalletBtn.classList.remove("hidden");
+
+            // Update form state
             submitBtn.disabled = false;
             submitBtn.classList.remove("opacity-50", "cursor-not-allowed");
             status.textContent = `✅ Wallet connected: ${short}`;
 
-            notificationsBtn.classList.remove("hidden");
-            officerRole.classList.remove("hidden");
-
-            // Show notifications if a wallet is connected
-            notificationsList.innerHTML = demoNotifs.map(n => `<li class="border-b border-gray-700 pb-2">${n}</li>`).join('');
+            // Notifications demo data
+            const demoNotifs = [
+                "You have 2 unpaid violations.",
+                "Officer: New violation issued.",
+                "Admin: Spike in violations detected."
+            ];
+            notificationsList.innerHTML = demoNotifs.map(n => `<li class="border-b border-slate-700 pb-2">${n}</li>`).join('');
             notifDot.classList.remove("hidden");
         }
 
-        /**
-         * Updates the UI to a disconnected state.
-         */
+        /** Updates the UI to show the user as disconnected. */
         function updateUIForDisconnectedState() {
+            // Reset global variables
+            userWallet = null;
+            provider = null;
+            signer = null;
+            contract = null;
+
             profile.classList.add("hidden");
-            connectWalletBtn.classList.remove("hidden");
+            notificationsBtn.classList.add("hidden");
+            officerRole.classList.add("hidden");
+
+            // Show the unified connect button
+            connectUnifiedBtn.classList.remove("hidden");
+
+            // Hide disconnect button
             disconnectWalletBtn.classList.add("hidden");
+
+            // Update form state
             submitBtn.disabled = true;
             submitBtn.classList.add("opacity-50", "cursor-not-allowed");
             status.textContent = "⚠️ Wallet disconnected.";
 
-            notificationsBtn.classList.add("hidden");
-            officerRole.classList.add("hidden");
-
+            // Notifications demo data
             notificationsList.innerHTML = `<li class="text-center text-gray-500">No new notifications.</li>`;
             notifDot.classList.add("hidden");
         }
 
-        /**
-         * Handles the wallet connection process.
-         */
-        connectWalletBtn.onclick = async () => {
+
+        // --- Connection Logic Functions ---
+
+        /** Generates a mock zkLogin address (Sui-like) for demonstration */
+        function generateMockZkLoginAddress() {
+            // This simulates a fixed-length Sui address derived from a successful zkLogin session
+            const uniqueId = "4004c0ffee25a3d7b88960101c513e9d89201917f699042a987d603a11b01234567";
+            return `0x${uniqueId}`;
+        }
+
+        /** Handles MetaMask connection flow */
+        async function connectMetaMask() {
+            connectionOptionsModal.classList.add('hidden'); // Close options modal
+            setModalState('Connecting to Wallet...', 'Please approve the connection in your MetaMask application.', true);
+
             if (!window.ethereum) {
-                walletConnectModal.classList.remove("hidden");
-                walletConnectModal.querySelector('h3').textContent = 'Please Install MetaMask';
-                walletConnectModal.querySelector('p').textContent = 'You need a Web3 wallet like MetaMask to connect.';
-                setTimeout(() => {
-                    walletConnectModal.classList.add("hidden");
-                }, 3000);
+                setModalState('Please Install MetaMask', 'You need a Web3 wallet like MetaMask to connect.', false);
+                setTimeout(() => { walletConnectModal.classList.add('hidden'); }, 3000);
                 return;
             }
-            walletConnectModal.classList.remove("hidden");
+
             try {
-                // Request accounts from the wallet
+                // ethers is available via the CDN script tag
                 provider = new ethers.BrowserProvider(window.ethereum);
                 const accounts = await provider.send("eth_requestAccounts", []);
                 userWallet = accounts[0];
                 signer = await provider.getSigner();
                 contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
 
-                // Save address to session storage for persistence
                 sessionStorage.setItem("walletAddress", userWallet);
                 updateUIForConnectedState(userWallet);
-                walletConnectModal.classList.add("hidden");
 
-                // Load past transaction history after connecting
+                setModalState('Connection Successful', 'Logged in via MetaMask.', false, true);
+                setTimeout(() => { walletConnectModal.classList.add("hidden"); }, 1000);
+                
                 loadPaidHistory();
             } catch (err) {
                 console.error("Wallet connection failed:", err);
-                walletConnectModal.classList.add("hidden");
+                setModalState('Connection Failed', 'The wallet connection was rejected or failed.', false);
+                setTimeout(() => { walletConnectModal.classList.add("hidden"); }, 3000);
             }
+        }
+
+        /** Handles zkLogin connection flow (mocked) */
+        async function connectZkLogin() {
+            connectionOptionsModal.classList.add('hidden'); // Close options modal
+            setModalState('Initiating zkLogin...', 'Simulating redirect to Google for sign-in...', true);
+
+            try {
+                // Simulate network/authentication delay
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                // Mocking the result of successful zkLogin (address derivation)
+                const address = generateMockZkLoginAddress();
+                userWallet = address;
+                
+                // IMPORTANT: For zkLogin (like Sui), the provider/signer/contract setup 
+                // would be different (Sui SDK, not Ethers). For this demo, we mock only the address.
+                // We leave provider/signer/contract uninitialized or null to prevent ETH transactions.
+                provider = null;
+                signer = null;
+                contract = null;
+                
+                sessionStorage.setItem("walletAddress", userWallet);
+                updateUIForConnectedState(userWallet);
+
+                setModalState('Login Successful', 'Logged in via zkLogin (Google).', false, true);
+                setTimeout(() => { walletConnectModal.classList.add("hidden"); }, 1000);
+
+            } catch (err) {
+                console.error("zkLogin failed:", err);
+                setModalState('zkLogin Failed', 'Could not complete zkLogin process.', false);
+                setTimeout(() => { walletConnectModal.classList.add("hidden"); }, 3000);
+            }
+        }
+
+
+        // --- Event Listeners ---
+
+        // 1. Unified Connect Button opens options modal
+        connectUnifiedBtn.onclick = () => {
+            connectionOptionsModal.classList.remove("hidden");
         };
 
-        /**
-         * Handles the wallet disconnection process.
-         */
+        // 2. Options Modal buttons trigger connection functions
+        selectMetaMaskBtn.onclick = connectMetaMask;
+        selectZkLoginBtn.onclick = connectZkLogin;
+
+        // 3. Disconnect Logic
         disconnectWalletBtn.onclick = () => {
             sessionStorage.removeItem("walletAddress");
-            userWallet = null;
             updateUIForDisconnectedState();
+
+            // Reset modal content back to default state
+            modalTitle.textContent = 'Connecting...';
+            modalMessage.textContent = 'Awaiting user confirmation.';
+            walletConnectModal.classList.add('hidden');
         };
 
-        // Wait for the DOM to load before initializing
-        window.addEventListener("DOMContentLoaded", async () => {
-            // Check for a saved wallet address to auto-connect
-            const saved = sessionStorage.getItem("walletAddress");
-            if (saved) {
-                try {
-                    // Re-initialize the provider, signer, and contract
-                    provider = new ethers.BrowserProvider(window.ethereum);
-                    signer = await provider.getSigner();
-                    userWallet = await signer.getAddress(); // Get the address from the signer
-                    contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+        // 4. Notifications Drawer Toggle
+        notificationsBtn.onclick = () => {
+            notificationsDrawer.classList.toggle('hidden');
+        };
 
-                    updateUIForConnectedState(userWallet);
-                    loadPaidHistory();
-                } catch (err) {
-                    console.error("Failed to auto-reconnect:", err);
-                    disconnectWalletBtn.onclick(); // Fallback to disconnected state
-                }
-            }
-
-            // Listen for changes in the wallet provider (e.g., account switch, disconnect)
-            if (window.ethereum) {
-                window.ethereum.on("accountsChanged", (accounts) => {
-                    if (accounts.length === 0) {
-                        disconnectWalletBtn.onclick();
-                    } else {
-                        const address = accounts[0];
-                        sessionStorage.setItem("walletAddress", address);
-                        updateUIForConnectedState(address);
-                    }
-                });
-            }
-
-            // Highlight the active nav link based on the current page
-            const currentPath = window.location.pathname.split('/').pop();
-            const navLinks = document.querySelectorAll('.nav-link');
-            navLinks.forEach(link => {
-                if (link.href.includes(currentPath)) {
-                    link.classList.add('bg-slate-700');
-                    link.classList.remove('hover:bg-slate-700');
-                } else {
-                    link.classList.remove('bg-slate-700');
-                    link.classList.add('hover:bg-slate-700');
-                }
-            });
-        });
-
+        // --- Payment/Form Logic (Unchanged) ---
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             try {
                 // Ensure a wallet is connected and the contract is initialized
                 if (!contract) {
-                    status.textContent = "Please connect your wallet first.";
+                    status.innerHTML = '<span class="text-red-400">❌ Error:</span> Please connect your **MetaMask** wallet for payment (zkLogin is for authentication only in this demo).';
                     return;
                 }
 
@@ -388,24 +539,26 @@
                 loadPaidHistory();
             } catch (err) {
                 console.error(err);
-                if (err.info && err.info.error && err.info.error.code == 4001) {
-                    status.innerHTML = `<span class="text-yellow-400">⚠️ Transaction cancelled by user.</span>`;
-                } else {
-                    status.innerHTML = `<span class="text-red-400">❌ Error:</span> ${err.message}`;
-                }
+                // Check for user rejection or specific error codes
+                const errorDetails = err.info?.error?.code == 4001 ? "Transaction cancelled by user." : err.message;
+                const errorClass = err.info?.error?.code == 4001 ? "text-yellow-400" : "text-red-400";
+
+                status.innerHTML = `<span class="${errorClass}">❌ Error:</span> ${errorDetails}`;
             }
         });
 
+        // --- History Logic (Unchanged) ---
         async function loadPaidHistory() {
             try {
                 if (!provider) {
-                    console.log("Provider not initialized. Cannot load history.");
+                    // If using zkLogin, we skip history loading as no ETH provider is available
+                    document.getElementById("paidTable").innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500">Connect via MetaMask to view payment history.</td></tr>';
                     return;
                 }
                 const contractReadOnly = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
                 const tableBody = document.getElementById("paidTable");
                 tableBody.innerHTML = "";
-                
+
                 // Get the latest block number
                 const latestBlock = await provider.getBlockNumber();
                 // Set a fromBlock to query only the last 1000 blocks
@@ -424,23 +577,84 @@
                     const { plateNumber, payer, payee, amount } = event.args;
                     const block = await provider.getBlock(event.blockNumber);
                     const timestamp = new Date(Number(block.timestamp) * 1000).toLocaleString();
-                    const amountEth = ethers.formatEther(amount);
-                    const row = document.createElement("tr");
-                    row.classList.add("border-t", "border-gray-700", "hover:bg-slate-700");
+                    const ethAmount = ethers.formatEther(amount); // Convert BigInt amount to ETH string
+
+                    const row = document.createElement('tr');
+                    row.classList.add('border-b', 'border-gray-700', 'hover:bg-slate-700');
                     row.innerHTML = `
-                    <td class="p-2">${plateNumber}</td>
-                    <td class="p-2 break-all">${payer}</td>
-                    <td class="p-2 break-all">${payee}</td>
-                    <td class="p-2 text-center">${amountEth}</td>
-                    <td class="p-2">${timestamp}</td>
+                        <td class="p-2">${plateNumber}</td>
+                        <td class="p-2 font-mono text-xs">${payer.slice(0, 6)}...${payer.slice(-4)}</td>
+                        <td class="p-2 font-mono text-xs">${payee.slice(0, 6)}...${payee.slice(-4)}</td>
+                        <td class="p-2 text-green-400 font-semibold">${parseFloat(ethAmount).toFixed(4)}</td>
+                        <td class="p-2 text-xs text-gray-400">${timestamp}</td>
                     `;
                     tableBody.appendChild(row);
                 }
             } catch (err) {
-                console.error("Error loading paid history:", err);
-                tableBody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-red-500">Error loading history. Try refreshing.</td></tr>';
+                console.error("Failed to load paid history (this is expected if a real Ethereum node connection fails):", err);
+                document.getElementById("paidTable").innerHTML = '<tr><td colspan="5" class="p-4 text-center text-red-500">Error loading history. (Check console for contract/provider details)</td></tr>';
             }
         }
+
+        // --- Initial Load / Session Persistence ---
+
+        window.addEventListener("DOMContentLoaded", async () => {
+            const savedAddress = sessionStorage.getItem("walletAddress");
+            if (savedAddress) {
+                // Attempt to re-establish connection for MetaMask/Ethers
+                if (window.ethereum && savedAddress.length === 42) { // 42 characters for EOA address (0x + 40 hex chars)
+                    try {
+                        provider = new ethers.BrowserProvider(window.ethereum);
+                        signer = await provider.getSigner();
+                        userWallet = await signer.getAddress(); // Verify connection
+                        contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+
+                        updateUIForConnectedState(userWallet);
+                        loadPaidHistory();
+                    } catch (err) {
+                        console.warn("Failed to auto-reconnect MetaMask, defaulting to disconnected state.", err);
+                        sessionStorage.removeItem("walletAddress");
+                        updateUIForDisconnectedState();
+                    }
+                } else if (savedAddress.length === 66 && savedAddress.startsWith("0x")) { // Mock zkLogin length (Sui address format)
+                    // If it's a zkLogin address, just update the UI without Ethers setup
+                    updateUIForConnectedState(savedAddress);
+                    // Still call loadPaidHistory to update the table status for non-MetaMask connection
+                    loadPaidHistory();
+                } else {
+                    updateUIForDisconnectedState();
+                }
+            } else {
+                updateUIForDisconnectedState();
+            }
+
+            // Listen for changes in the wallet provider (MetaMask only)
+            if (window.ethereum) {
+                window.ethereum.on("accountsChanged", (accounts) => {
+                    if (accounts.length === 0) {
+                        disconnectWalletBtn.onclick();
+                    } else {
+                        const address = accounts[0];
+                        sessionStorage.setItem("walletAddress", address);
+                        updateUIForConnectedState(address);
+                        loadPaidHistory();
+                    }
+                });
+            }
+
+            // Highlight the active nav link based on the current page
+            const currentPath = window.location.pathname.split('/').pop() || 'index.html';
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                if (link.href.includes(currentPath)) {
+                    link.classList.add('bg-slate-700');
+                    link.classList.remove('hover:bg-slate-700');
+                } else {
+                    link.classList.remove('bg-slate-700');
+                    link.classList.add('hover:bg-slate-700');
+                }
+            });
+        });
     </script>
 </body>
 
