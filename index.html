@@ -23,20 +23,31 @@
             display: flex;
         }
 
-        #wallet-connect-modal {
+        /* Spinning loader style - only used inside the modal for demonstration */
+        #wallet-connect-modal .loader {
             border: 4px solid rgba(255, 255, 255, 0.2);
             border-left-color: #64748b;
             border-radius: 50%;
             width: 30px;
             height: 30px;
             animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         /* Fix the main content to not overlap with the fixed navbar on mobile */
         @media (max-width: 767px) {
             main>div:first-of-type {
                 padding-bottom: 4rem;
-                /* Adjust this value if needed */
             }
         }
     </style>
@@ -50,8 +61,7 @@
             <span class="hidden sm:inline text-sm font-semibold ml-2">Driver's License Penalty Tracker</span>
         </div>
         <div class="flex items-center gap-4">
-            <button id="notificationsBtn" class="relative text-xl hover:text-gray-400 hidden"
-                aria-label="Notifications">
+            <button id="notificationsBtn" class="relative text-xl hover:text-gray-400 hidden" aria-label="Notifications">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                     stroke="currentColor" class="w-6 h-6">
                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -64,24 +74,25 @@
                 <span id="officerRole"
                     class="ml-2 bg-indigo-600 px-2 py-1 rounded-full text-xs font-bold hidden">Officer</span>
             </div>
-            <button id="connectWalletBtn"
-                class="bg-indigo-600 hover:bg-indigo-00 text-white font-semibold py-2 px-4 rounded-full shadow-lg transition-all duration-300 transform active:scale-95">
-                Connect Wallet
+            
+            <!-- NEW zkLogin Button -->
+            <button id="connectZkLoginBtn"
+                class="bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2 px-4 rounded-full shadow-lg transition-all duration-300 transform active:scale-95">
+                Login with Google (zkLogin)
             </button>
+            
+            <!-- Existing MetaMask Button -->
+            <button id="connectWalletBtn"
+                class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-full shadow-lg transition-all duration-300 transform active:scale-95">
+                Connect Wallet (MetaMask)
+            </button>
+            
             <button id="disconnectWalletBtn"
                 class="bg-red-700 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-full shadow-lg transition-all duration-300 transform active:scale-95 hidden">
                 Disconnect
             </button>
         </div>
     </header>
-
-    <!-- Wallet Connect Modal -->
-    <div id="wallet-connect-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
-        <div class="bg-slate-800 rounded-xl shadow-2xl p-8 max-w-sm w-full text-center text-white">
-            <h3 class="text-xl font-bold mb-4">Connecting to Wallet...</h3>
-            <p class="text-white">Please approve the connection in your wallet application.</p>
-        </div>
-    </div>
 
     <!-- Notifications Drawer -->
     <div id="notificationsDrawer"
@@ -130,7 +141,7 @@
                 </svg>
                 <div class="font-bold text-xs md:text-base">Officer</div>
             </a>
-            <a href="search.html" id="nav-driver"
+            <a href="notary-records.html?role=driver" id="nav-driver"
                 class="nav-link flex flex-col items-center md:flex-row gap-1 md:gap-2 px-2 py-1 md:p-3 rounded-lg hover:bg-slate-700 transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                     stroke="currentColor" class="w-6 h-6">
@@ -139,7 +150,7 @@
                 </svg>
                 <div class="font-bold text-xs md:text-base">Driver</div>
             </a>
-            <a href="admin.html" id="nav-admin"
+            <a href="notary-records.html" id="nav-admin"
                 class="nav-link flex flex-col items-center md:flex-row gap-1 md:gap-2 px-2 py-1 md:p-3 rounded-lg hover:bg-slate-700 transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                     stroke="currentColor" class="w-6 h-6">
@@ -150,113 +161,183 @@
             </a>
         </nav>
 
-
         <!-- Main Content Area -->
         <div class="flex-1 flex flex-col items-center px-4 py-8 order-1 md:order-none">
             <!-- Hero / Info Container -->
             <section class="max-w-2xl w-full bg-slate-800 bg-opacity-80 rounded-xl shadow-lg p-8 mb-10 text-center">
                 <h1 class="text-3xl sm:text-4xl font-bold mb-3 text-white">Driver's License Penalty Tracker</h1>
                 <p class="text-white text-lg mb-4">
-                    A decentralized platform for traffic violation management. Officers issue tickets, drivers pay
-                    fines,
+                    A decentralized platform for traffic violation management. Officers issue tickets, drivers pay fines,
                     and admins monitor—all on-chain.
                 </p>
             </section>
         </div>
-
-        <!-- The old cards are removed in favor of the persistent navigation -->
-        </div>
     </main>
 
-    <!-- Wallet Connect Modal -->
-    <div id="wallet-connect-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+    <!-- Wallet Connect Modal (Used for both MetaMask and zkLogin connection flow status) -->
+    <div id="wallet-connect-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-70">
         <div class="bg-slate-800 rounded-xl shadow-2xl p-8 max-w-sm w-full text-center text-white">
-            <h3 class="text-xl font-bold mb-4">Connecting to Wallet...</h3>
-            <p class="text-white">Please approve the connection in your wallet application.</p>
+            <div id="modal-spinner" class="loader"></div>
+            <h3 id="modal-title" class="text-xl font-bold mb-2">Connecting to Wallet...</h3>
+            <p id="modal-message" class="text-white">Please approve the connection in your wallet application.</p>
         </div>
     </div>
 
     <script>
-        // Wallet Connect Logic
+        // --- Element References ---
         const connectWalletBtn = document.getElementById("connectWalletBtn");
+        const connectZkLoginBtn = document.getElementById("connectZkLoginBtn");
         const walletConnectModal = document.getElementById("wallet-connect-modal");
+        const modalTitle = document.getElementById("modal-title");
+        const modalMessage = document.getElementById("modal-message");
+        const modalSpinner = document.getElementById("modal-spinner");
         const profile = document.getElementById("profile");
         const walletShort = document.getElementById("walletShort");
         const disconnectWalletBtn = document.getElementById("disconnectWalletBtn");
         const notificationsBtn = document.getElementById("notificationsBtn");
         const officerRole = document.getElementById("officerRole");
-
-        // Notifications Logic
         const notificationsDrawer = document.getElementById("notificationsDrawer");
         const notificationsList = document.getElementById("notificationsList");
         const notifDot = document.getElementById("notifDot");
 
-        notificationsBtn.onclick = () => {
-            notificationsDrawer.classList.remove("hidden");
-            notifDot.classList.add("hidden");
-            notificationsList.innerHTML = `<li class="text-center text-white">No new notifications.</li>`;
-        };
+        // --- Utility Functions ---
 
-        const demoNotifs = [
-            "You have 2 unpaid violations.",
-            "Officer: New violation issued.",
-            "Admin: Spike in violations detected."
-        ];
-        if (sessionStorage.getItem("walletAddress")) {
-            notificationsList.innerHTML = demoNotifs.map(n => `<li class="border-b border-slate-700 pb-2">${n}</li>`).join('');
-            notifDot.classList.remove("hidden");
+        /**
+         * Sets the content and visibility of the connection modal.
+         * @param {string} title
+         * @param {string} message
+         * @param {boolean} showSpinner
+         * @param {boolean} isSuccess
+         */
+        function setModalState(title, message, showSpinner, isSuccess = false) {
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+            if (showSpinner) {
+                modalSpinner.classList.remove("hidden");
+                modalSpinner.classList.remove("text-green-500", "text-red-500");
+                modalSpinner.style.borderLeftColor = "#64748b";
+            } else {
+                modalSpinner.classList.add("hidden");
+            }
+            if (isSuccess) {
+                // Change spinner to a checkmark for success (mocking)
+                modalSpinner.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-8 h-8 text-green-500 mx-auto mb-2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>';
+            } else {
+                // Reset spinner for subsequent use if needed
+                modalSpinner.innerHTML = '';
+            }
+            walletConnectModal.classList.remove("hidden");
         }
 
+        // --- UI State Management ---
 
-        // --- Wallet Connection Logic (Modified) ---
+        /** Updates the UI to show the user as connected. */
         function updateUIForConnectedState(address) {
             const short = `${address.slice(0, 6)}...${address.slice(-4)}`;
             walletShort.textContent = short;
             profile.classList.remove("hidden");
             notificationsBtn.classList.remove("hidden");
             officerRole.classList.remove("hidden");
+
+            // Hide all connection methods
             connectWalletBtn.classList.add("hidden");
+            connectZkLoginBtn.classList.add("hidden");
+            
+            // Show disconnect button
             disconnectWalletBtn.classList.remove("hidden");
         }
 
+        /** Updates the UI to show the user as disconnected. */
         function updateUIForDisconnectedState() {
             profile.classList.add("hidden");
             notificationsBtn.classList.add("hidden");
             officerRole.classList.add("hidden");
+
+            // Show all connection methods
             connectWalletBtn.classList.remove("hidden");
+            connectZkLoginBtn.classList.remove("hidden");
+            
+            // Hide disconnect button
             disconnectWalletBtn.classList.add("hidden");
         }
 
+        // --- MetaMask Connection Logic ---
+
         connectWalletBtn.onclick = async () => {
+            setModalState('Connecting to Wallet...', 'Please approve the connection in your wallet application.', true);
+
             if (!window.ethereum) {
-                // Use a modal message instead of alert
-                document.getElementById('wallet-connect-modal').querySelector('h3').textContent = 'Please Install MetaMask';
-                document.getElementById('wallet-connect-modal').querySelector('p').textContent = 'You need a Web3 wallet like MetaMask to connect.';
-                document.getElementById('wallet-connect-modal').classList.remove('hidden');
-                setTimeout(() => {
-                    document.getElementById('wallet-connect-modal').classList.add('hidden');
-                }, 3000);
+                setModalState('Please Install MetaMask', 'You need a Web3 wallet like MetaMask to connect.', false);
+                setTimeout(() => { walletConnectModal.classList.add('hidden'); }, 3000);
                 return;
             }
-            walletConnectModal.classList.remove("hidden");
+
             try {
                 const provider = new ethers.BrowserProvider(window.ethereum);
                 const accounts = await provider.send("eth_requestAccounts", []);
                 const address = accounts[0];
+                
                 sessionStorage.setItem("walletAddress", address);
                 updateUIForConnectedState(address);
-                walletConnectModal.classList.add("hidden");
+                
+                setModalState('Connection Successful', 'Logged in via MetaMask.', true, true);
+                setTimeout(() => { walletConnectModal.classList.add("hidden"); }, 1000);
             } catch (err) {
                 console.error("Wallet connection failed:", err);
-                walletConnectModal.classList.add("hidden");
-                // Optional: show a user-friendly error message
+                setModalState('Connection Failed', 'The wallet connection was rejected or failed.', false);
+                setTimeout(() => { walletConnectModal.classList.add("hidden"); }, 3000);
             }
         };
+
+        // --- ZKLogin (Google) Connection Logic ---
+
+        /** Generates a mock zkLogin address (Sui-like) for demonstration */
+        function generateMockZkLoginAddress() {
+            // This simulates a fixed-length Sui address derived from a successful zkLogin session
+            // The hex part is deterministic for Google logins in this demo
+            const uniqueId = "4004c0ffee25a3d7b88960101c513e9d89201917f699042a987d603a11b01234567"; 
+            return `0x${uniqueId}`;
+        }
+
+        connectZkLoginBtn.onclick = async () => {
+            setModalState('Initiating zkLogin...', 'Redirecting to Google for sign-in...', true);
+            
+            // NOTE: In a real application, this would start the OIDC flow, 
+            // causing a redirect to Google, and the subsequent code would run 
+            // upon callback after receiving the JWT/zk proof.
+            
+            try {
+                // Simulate network/authentication delay
+                await new Promise(resolve => setTimeout(resolve, 2000)); 
+                
+                // Mocking the result of successful zkLogin (address derivation)
+                const address = generateMockZkLoginAddress();
+
+                sessionStorage.setItem("walletAddress", address);
+                updateUIForConnectedState(address);
+
+                setModalState('Login Successful', 'Logged in via zkLogin (Google).', true, true);
+                setTimeout(() => { walletConnectModal.classList.add("hidden"); }, 1000);
+
+            } catch (err) {
+                console.error("zkLogin failed:", err);
+                setModalState('zkLogin Failed', 'Could not complete zkLogin process.', false);
+                setTimeout(() => { walletConnectModal.classList.add("hidden"); }, 3000);
+            }
+        };
+
+
+        // --- Disconnect Logic ---
 
         disconnectWalletBtn.onclick = () => {
             sessionStorage.removeItem("walletAddress");
             updateUIForDisconnectedState();
+            // Reset modal content back to default state
+            setModalState('Connecting to Wallet...', 'Please approve the connection in your wallet application.', true);
+            walletConnectModal.classList.add('hidden'); // Ensure it's hidden after disconnect
         };
+
+        // --- Initial Load / Session Persistence ---
 
         window.addEventListener("DOMContentLoaded", () => {
             const savedAddress = sessionStorage.getItem("walletAddress");
@@ -264,6 +345,19 @@
                 updateUIForConnectedState(savedAddress);
             } else {
                 updateUIForDisconnectedState();
+            }
+            
+            // Notifications logic on load (just demo data)
+            const demoNotifs = [
+                "You have 2 unpaid violations.",
+                "Officer: New violation issued.",
+                "Admin: Spike in violations detected."
+            ];
+            if (savedAddress) {
+                notificationsList.innerHTML = demoNotifs.map(n => `<li class="border-b border-slate-700 pb-2">${n}</li>`).join('');
+                notifDot.classList.remove("hidden");
+            } else {
+                notificationsList.innerHTML = `<li class="text-center text-white">No new notifications.</li>`;
             }
         });
     </script>
