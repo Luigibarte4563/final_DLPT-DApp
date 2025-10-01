@@ -74,19 +74,13 @@
                 <span id="officerRole"
                     class="ml-2 bg-indigo-600 px-2 py-1 rounded-full text-xs font-bold hidden">Officer</span>
             </div>
-            
-            <!-- NEW zkLogin Button -->
-            <button id="connectZkLoginBtn"
-                class="bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2 px-4 rounded-full shadow-lg transition-all duration-300 transform active:scale-95">
-                Login with Google (zkLogin)
-            </button>
-            
-            <!-- Existing MetaMask Button -->
-            <button id="connectWalletBtn"
+
+            <!-- Unified Connect Button -->
+            <button id="connectUnifiedBtn"
                 class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-full shadow-lg transition-all duration-300 transform active:scale-95">
-                Connect Wallet (MetaMask)
+                Connect Wallet
             </button>
-            
+
             <button id="disconnectWalletBtn"
                 class="bg-red-700 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-full shadow-lg transition-all duration-300 transform active:scale-95 hidden">
                 Disconnect
@@ -173,37 +167,69 @@
             </section>
         </div>
     </main>
-
-    <!-- Wallet Connect Modal (Used for both MetaMask and zkLogin connection flow status) -->
-    <div id="wallet-connect-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-70">
-        <div class="bg-slate-800 rounded-xl shadow-2xl p-8 max-w-sm w-full text-center text-white">
-            <div id="modal-spinner" class="loader"></div>
-            <h3 id="modal-title" class="text-xl font-bold mb-2">Connecting to Wallet...</h3>
-            <p id="modal-message" class="text-white">Please approve the connection in your wallet application.</p>
+    
+    <!-- Connection Options Modal (The new modal for choice) -->
+    <div id="connection-options-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-70">
+        <div class="bg-slate-800 rounded-xl shadow-2xl p-8 max-w-sm w-full text-center text-white relative">
+            <button onclick="document.getElementById('connection-options-modal').classList.add('hidden')"
+                class="absolute top-3 right-3 text-slate-400 hover:text-white transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <h3 class="text-2xl font-bold mb-6 text-indigo-400">Choose a Connection Method</h3>
+            
+            <div class="space-y-4">
+                <button id="selectMetaMaskBtn"
+                    class="w-full flex items-center justify-center gap-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-4 rounded-xl shadow-md transition-all duration-200 transform active:scale-95">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 16h-2v-2h2v2zm0-4h-2V7h2v7z"/></svg>
+                    Connect with MetaMask
+                </button>
+                <div class="text-sm text-slate-400 font-semibold uppercase tracking-wider">or</div>
+                <button id="selectZkLoginBtn"
+                    class="w-full flex items-center justify-center gap-3 bg-sky-600 hover:bg-sky-700 text-white font-semibold py-3 px-4 rounded-xl shadow-md transition-all duration-200 transform active:scale-95">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M22.65 11.23c0-.66-.06-1.3-.17-1.92h-1.5V8.12H19.2v1.19h-1.5c-.11.62-.17 1.26-.17 1.92 0 .66.06 1.3.17 1.92h1.5v1.19h1.78v-1.19h1.5c.11-.62.17-1.26.17-1.92zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zM12 6c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/></svg>
+                    Login with Google (zkLogin)
+                </button>
+            </div>
         </div>
     </div>
 
+
+    <!-- Wallet Connect Status Modal (Used for displaying connection status/spinner) -->
+    <div id="wallet-connect-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden bg-black bg-opacity-70">
+        <div class="bg-slate-800 rounded-xl shadow-2xl p-8 max-w-sm w-full text-center text-white">
+            <div id="modal-spinner" class="loader"></div>
+            <h3 id="modal-title" class="text-xl font-bold mb-2">Connecting...</h3>
+            <p id="modal-message" class="text-white">Awaiting user confirmation.</p>
+        </div>
+    </div>
+
+
     <script>
         // --- Element References ---
-        const connectWalletBtn = document.getElementById("connectWalletBtn");
-        const connectZkLoginBtn = document.getElementById("connectZkLoginBtn");
+        const connectUnifiedBtn = document.getElementById("connectUnifiedBtn"); // New unified button
+        const selectMetaMaskBtn = document.getElementById("selectMetaMaskBtn");
+        const selectZkLoginBtn = document.getElementById("selectZkLoginBtn");
+        const disconnectWalletBtn = document.getElementById("disconnectWalletBtn");
+        
+        const connectionOptionsModal = document.getElementById("connection-options-modal");
         const walletConnectModal = document.getElementById("wallet-connect-modal");
         const modalTitle = document.getElementById("modal-title");
         const modalMessage = document.getElementById("modal-message");
         const modalSpinner = document.getElementById("modal-spinner");
+        
         const profile = document.getElementById("profile");
         const walletShort = document.getElementById("walletShort");
-        const disconnectWalletBtn = document.getElementById("disconnectWalletBtn");
         const notificationsBtn = document.getElementById("notificationsBtn");
         const officerRole = document.getElementById("officerRole");
-        const notificationsDrawer = document.getElementById("notificationsDrawer");
         const notificationsList = document.getElementById("notificationsList");
         const notifDot = document.getElementById("notifDot");
 
         // --- Utility Functions ---
 
         /**
-         * Sets the content and visibility of the connection modal.
+         * Sets the content and visibility of the connection status modal.
          * @param {string} title
          * @param {string} message
          * @param {boolean} showSpinner
@@ -212,36 +238,35 @@
         function setModalState(title, message, showSpinner, isSuccess = false) {
             modalTitle.textContent = title;
             modalMessage.textContent = message;
+            
+            modalSpinner.innerHTML = ''; // Reset checkmark/spinner placeholder
+            
             if (showSpinner) {
                 modalSpinner.classList.remove("hidden");
-                modalSpinner.classList.remove("text-green-500", "text-red-500");
-                modalSpinner.style.borderLeftColor = "#64748b";
+                modalSpinner.classList.add("loader");
             } else {
-                modalSpinner.classList.add("hidden");
-            }
-            if (isSuccess) {
-                // Change spinner to a checkmark for success (mocking)
-                modalSpinner.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-8 h-8 text-green-500 mx-auto mb-2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>';
-            } else {
-                // Reset spinner for subsequent use if needed
-                modalSpinner.innerHTML = '';
+                modalSpinner.classList.remove("loader");
+                if (isSuccess) {
+                    // Display checkmark for success
+                    modalSpinner.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-8 h-8 text-green-500 mx-auto mb-2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>';
+                } else {
+                    modalSpinner.classList.add("hidden");
+                }
             }
             walletConnectModal.classList.remove("hidden");
         }
-
-        // --- UI State Management ---
 
         /** Updates the UI to show the user as connected. */
         function updateUIForConnectedState(address) {
             const short = `${address.slice(0, 6)}...${address.slice(-4)}`;
             walletShort.textContent = short;
+            
             profile.classList.remove("hidden");
             notificationsBtn.classList.remove("hidden");
             officerRole.classList.remove("hidden");
 
-            // Hide all connection methods
-            connectWalletBtn.classList.add("hidden");
-            connectZkLoginBtn.classList.add("hidden");
+            // Hide the unified connect button
+            connectUnifiedBtn.classList.add("hidden");
             
             // Show disconnect button
             disconnectWalletBtn.classList.remove("hidden");
@@ -253,18 +278,27 @@
             notificationsBtn.classList.add("hidden");
             officerRole.classList.add("hidden");
 
-            // Show all connection methods
-            connectWalletBtn.classList.remove("hidden");
-            connectZkLoginBtn.classList.remove("hidden");
+            // Show the unified connect button
+            connectUnifiedBtn.classList.remove("hidden");
             
             // Hide disconnect button
             disconnectWalletBtn.classList.add("hidden");
         }
 
-        // --- MetaMask Connection Logic ---
 
-        connectWalletBtn.onclick = async () => {
-            setModalState('Connecting to Wallet...', 'Please approve the connection in your wallet application.', true);
+        // --- Connection Logic Functions ---
+
+        /** Generates a mock zkLogin address (Sui-like) for demonstration */
+        function generateMockZkLoginAddress() {
+            // This simulates a fixed-length Sui address derived from a successful zkLogin session
+            const uniqueId = "4004c0ffee25a3d7b88960101c513e9d89201917f699042a987d603a11b01234567"; 
+            return `0x${uniqueId}`;
+        }
+
+        /** Handles MetaMask connection flow */
+        async function connectMetaMask() {
+            connectionOptionsModal.classList.add('hidden'); // Close options modal
+            setModalState('Connecting to Wallet...', 'Please approve the connection in your MetaMask application.', true);
 
             if (!window.ethereum) {
                 setModalState('Please Install MetaMask', 'You need a Web3 wallet like MetaMask to connect.', false);
@@ -273,6 +307,7 @@
             }
 
             try {
+                // ethers is available via the CDN script tag
                 const provider = new ethers.BrowserProvider(window.ethereum);
                 const accounts = await provider.send("eth_requestAccounts", []);
                 const address = accounts[0];
@@ -280,31 +315,19 @@
                 sessionStorage.setItem("walletAddress", address);
                 updateUIForConnectedState(address);
                 
-                setModalState('Connection Successful', 'Logged in via MetaMask.', true, true);
+                setModalState('Connection Successful', 'Logged in via MetaMask.', false, true);
                 setTimeout(() => { walletConnectModal.classList.add("hidden"); }, 1000);
             } catch (err) {
                 console.error("Wallet connection failed:", err);
                 setModalState('Connection Failed', 'The wallet connection was rejected or failed.', false);
                 setTimeout(() => { walletConnectModal.classList.add("hidden"); }, 3000);
             }
-        };
-
-        // --- ZKLogin (Google) Connection Logic ---
-
-        /** Generates a mock zkLogin address (Sui-like) for demonstration */
-        function generateMockZkLoginAddress() {
-            // This simulates a fixed-length Sui address derived from a successful zkLogin session
-            // The hex part is deterministic for Google logins in this demo
-            const uniqueId = "4004c0ffee25a3d7b88960101c513e9d89201917f699042a987d603a11b01234567"; 
-            return `0x${uniqueId}`;
         }
 
-        connectZkLoginBtn.onclick = async () => {
-            setModalState('Initiating zkLogin...', 'Redirecting to Google for sign-in...', true);
-            
-            // NOTE: In a real application, this would start the OIDC flow, 
-            // causing a redirect to Google, and the subsequent code would run 
-            // upon callback after receiving the JWT/zk proof.
+        /** Handles zkLogin connection flow (mocked) */
+        async function connectZkLogin() {
+            connectionOptionsModal.classList.add('hidden'); // Close options modal
+            setModalState('Initiating zkLogin...', 'Simulating redirect to Google for sign-in...', true);
             
             try {
                 // Simulate network/authentication delay
@@ -316,7 +339,7 @@
                 sessionStorage.setItem("walletAddress", address);
                 updateUIForConnectedState(address);
 
-                setModalState('Login Successful', 'Logged in via zkLogin (Google).', true, true);
+                setModalState('Login Successful', 'Logged in via zkLogin (Google).', false, true);
                 setTimeout(() => { walletConnectModal.classList.add("hidden"); }, 1000);
 
             } catch (err) {
@@ -324,17 +347,34 @@
                 setModalState('zkLogin Failed', 'Could not complete zkLogin process.', false);
                 setTimeout(() => { walletConnectModal.classList.add("hidden"); }, 3000);
             }
+        }
+
+
+        // --- Event Listeners ---
+
+        // 1. Unified Connect Button opens options modal
+        connectUnifiedBtn.onclick = () => {
+            connectionOptionsModal.classList.remove("hidden");
         };
 
+        // 2. Options Modal buttons trigger connection functions
+        selectMetaMaskBtn.onclick = connectMetaMask;
+        selectZkLoginBtn.onclick = connectZkLogin;
 
-        // --- Disconnect Logic ---
-
+        // 3. Disconnect Logic
         disconnectWalletBtn.onclick = () => {
             sessionStorage.removeItem("walletAddress");
             updateUIForDisconnectedState();
+            
             // Reset modal content back to default state
-            setModalState('Connecting to Wallet...', 'Please approve the connection in your wallet application.', true);
-            walletConnectModal.classList.add('hidden'); // Ensure it's hidden after disconnect
+            modalTitle.textContent = 'Connecting...';
+            modalMessage.textContent = 'Awaiting user confirmation.';
+            walletConnectModal.classList.add('hidden');
+        };
+
+        // 4. Notifications Drawer Toggle
+        notificationsBtn.onclick = () => {
+             notificationsDrawer.classList.toggle('hidden');
         };
 
         // --- Initial Load / Session Persistence ---
@@ -364,3 +404,4 @@
 </body>
 
 </html>
+
